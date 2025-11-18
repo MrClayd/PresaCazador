@@ -1,25 +1,12 @@
 import tkinter as tk
-from Mapa import CAMINO, LIANA, TUNEL, MURO
+from Mapa import generar_mapa
 from Interfaz import Interfaz
-
-# Mapa de prueba fijo de 10x10
-mapa_prueba = [
-    [CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, MURO,   LIANA,  CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, CAMINO, CAMINO, TUNEL,  CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, MURO,   CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-    [CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO, CAMINO],
-]
 
 def iniciar():
     root = tk.Tk()
-    root.title("Prueba de mapa 10x10 y movimiento")
-    Interfaz(root, mapa_prueba)
+    root.title("Mapa aleatorio 10x10")
+    mapa = generar_mapa(10, 10)  # cada vez será distinto
+    Interfaz(root, mapa)
     root.mainloop()
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import tkinter as tk
 from Mapa import tipo_de_celda
-from Entidades import Jugador
+from Entidades import Jugador, Enemigo
+from pathfinding import bfs, astar
 
 class Interfaz:
     def __init__(self, root, mapa):
@@ -22,12 +23,22 @@ class Interfaz:
             5, 5, self.cell_size-5, self.cell_size-5,
             fill="red", tags="jugador"
         )
+        
+        # Enemigo en (9,9)
+        self.enemigo = Enemigo(9, 9)
+        self.enemigo_sprite = self.canvas.create_rectangle(
+            9*self.cell_size+5, 9*self.cell_size+5,
+            9*self.cell_size+self.cell_size-5, 9*self.cell_size+self.cell_size-5,
+            fill="yellow", tags="enemigo"
+        )
 
         # Bind de teclas
         self.root.bind("<Up>", lambda e: self.mover_jugador(-1, 0))
         self.root.bind("<Down>", lambda e: self.mover_jugador(1, 0))
         self.root.bind("<Left>", lambda e: self.mover_jugador(0, -1))
         self.root.bind("<Right>", lambda e: self.mover_jugador(0, 1))
+
+        self.mover_enemigo()
 
     def dibujar_mapa(self):
         """Dibuja el mapa en el Canvas."""
@@ -46,3 +57,25 @@ class Interfaz:
             x1, y1 = j*self.cell_size+5, i*self.cell_size+5
             x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
             self.canvas.coords(self.jugador_sprite, x1, y1, x2, y2)
+
+    def mover_enemigo(self):
+        """IA con BFS: el enemigo busca el camino más corto hacia el jugador."""
+        ji, jj = self.jugador.posicion()
+        ei, ej = self.enemigo.posicion()
+
+        # Calcular primer paso con BFS
+        di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+        di, dj = astar(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+
+        if self.enemigo.mover(di, dj, self.mapa, es_jugador=False):
+            ei, ej = self.enemigo.posicion()
+            x1, y1 = ej*self.cell_size+5, ei*self.cell_size+5
+            x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
+            self.canvas.coords(self.enemigo_sprite, x1, y1, x2, y2)
+
+        # Verificar colisión con jugador
+        if self.enemigo.posicion() == self.jugador.posicion():
+            print("¡El enemigo atrapó al jugador!")
+
+        # Repetir cada 500 ms
+        self.root.after(500, self.mover_enemigo)
