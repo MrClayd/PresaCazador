@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
-
+from Main import iniciar
 # Lista de imágenes subidas (ajusta los nombres si los cambias)
-imagenes = ["ESE_1_M.png", "ESE_2_M.png", "ESE_3_M.png"]  # Usa los nombres reales de tus archivos
+imagenes = ["ESE_1_M.png", "ESE_2_M.png", "ESE_3_M.png","ESE_9_M.png","ESE_3_VA_M.png","ESE_6_M.png"]  # Usa los nombres reales de tus archivos
 indice_actual = 0
 
 # Crear ventana principal
@@ -34,14 +34,15 @@ def rotar_imagen():
         fondo_label.config(image=imagen)
         fondo_label.image = imagen
     indice_actual = (indice_actual + 1) % len(imagenes)
-    ventana.after(5000, rotar_imagen)
+    ventana.after(10000, rotar_imagen)
 
 # Iniciar rotación
 rotar_imagen()
 
 # Funciones de los botones
 def jugar():
-    print("Iniciando el juego...")
+    ventana.destroy()
+    iniciar()
 
 def ver_puntajes():
     print("Mostrando puntajes...")
