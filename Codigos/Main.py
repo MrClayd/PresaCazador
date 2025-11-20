@@ -4,9 +4,9 @@ from Interfaz import Interfaz
 
 def iniciar():
     root = tk.Tk()
-    root.title("Mapa aleatorio 10x10")
-    mapa = generar_mapa(10, 10)  # cada vez será distinto
-    Interfaz(root, mapa)
+    root.title("Escapa del Cazador")
+    mapa, inicio, salida = generar_mapa(16, 16)  
+    Interfaz(root, mapa, inicio, salida)
     root.mainloop()
 
 if __name__ == "__main__":

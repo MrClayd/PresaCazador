@@ -4,7 +4,7 @@ from Entidades import Jugador, Enemigo
 from pathfinding import bfs, astar
 
 class Interfaz:
-    def __init__(self, root, mapa):
+    def __init__(self, root, mapa, inicio, salida):
         self.root = root
         self.mapa = mapa
         self.cell_size = 40  # tamaño de cada celda en píxeles
@@ -18,9 +18,10 @@ class Interfaz:
         self.dibujar_mapa()
 
         # Crear jugador en posición inicial (0,0)
-        self.jugador = Jugador(0, 0)
+        self.jugador = Jugador(inicio[0], inicio[1])
         self.jugador_sprite = self.canvas.create_oval(
-            5, 5, self.cell_size-5, self.cell_size-5,
+            inicio[1]*self.cell_size+5, inicio[0]*self.cell_size+5,
+            inicio[1]*self.cell_size+self.cell_size-5, inicio[0]*self.cell_size+self.cell_size-5,
             fill="red", tags="jugador"
         )
         
@@ -79,3 +80,12 @@ class Interfaz:
 
         # Repetir cada 500 ms
         self.root.after(500, self.mover_enemigo)
+
+    def dibujar_mapa(self):
+        alto, ancho = len(self.mapa), len(self.mapa[0])
+        for i in range(alto):
+            for j in range(ancho):
+                celda = tipo_de_celda(self.mapa[i][j])
+                x1, y1 = j*self.cell_size, i*self.cell_size
+                x2, y2 = x1+self.cell_size, y1+self.cell_size
+                self.canvas.create_rectangle(x1, y1, x2, y2, fill=celda.color(), outline="black")
