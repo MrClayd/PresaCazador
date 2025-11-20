@@ -1,4 +1,4 @@
-from Mapa import CAMINO, LIANA, TUNEL
+from Mapa import CAMINO, LIANA, TUNEL, SALIDA
 
 class EntidadBase:
     def __init__(self, i, j, velocidad=1):
@@ -15,7 +15,7 @@ class EntidadBase:
         alto, ancho = len(mapa), len(mapa[0])
         if 0 <= ni < alto and 0 <= nj < ancho:
             celda = mapa[ni][nj]
-            if es_jugador and celda in (CAMINO, TUNEL):
+            if es_jugador and celda in (CAMINO, TUNEL, SALIDA):
                 self.i, self.j = ni, nj
                 return True
             elif not es_jugador and celda in (CAMINO, LIANA):
