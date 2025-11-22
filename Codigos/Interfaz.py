@@ -1,6 +1,7 @@
 import tkinter as tk
+import random
 import time
-from Mapa import tipo_de_celda, CAMINO
+from Mapa import tipo_de_celda, CAMINO, LIANA
 from Entidades import Jugador, Enemigo
 from trampas import Trampa
 from pathfinding import bfs, astar
@@ -78,6 +79,9 @@ class Interfaz:
                 )
 
     def mover_enemigo(self):
+        if self.enemigo is None:
+            self.root.after(500, self.mover_enemigo)
+            return
         ji, jj = self.jugador.posicion()
         ei, ej = self.enemigo.posicion()
 
@@ -111,12 +115,38 @@ class Interfaz:
         self.root.after(500, self.mover_enemigo)
 
     def respawn_enemigo(self):
-        if self.enemigo is None:
-            i, j = 10, 10
-        # Reaparece en posición fija o aleatoria
-            self.enemigo = Enemigo(10, 10)
-            self.enemigo_sprite = self.canvas.create_rectangle(
-            j*self.cell_size+5, i*self.cell_size+5,
-            j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
-            fill="yellow", tags="enemigo"
-            )
+        if self.enemigo is not None:
+            return  # ya existe un enemigo, no crear otro
+
+        alto, ancho = len(self.mapa), len(self.mapa[0])
+        ji, jj = self.jugador.posicion()
+
+        # Intentar hasta 100 veces encontrar una celda válida
+        for _ in range(100):
+            i = random.randrange(1, alto-1)
+            j = random.randrange(1, ancho-1)
+            if (i, j) != (ji, jj) and self.mapa[i][j] in (CAMINO, LIANA):
+                # Verificar que tenga al menos un vecino accesible
+                for di, dj in [(-1,0),(1,0),(0,-1),(0,1)]:
+                    ni, nj = i+di, j+dj
+                    if 0 <= ni < alto and 0 <= nj < ancho and self.mapa[ni][nj] in (CAMINO, LIANA):
+                        # Crear enemigo aquí
+                        self.enemigo = Enemigo(i, j)
+                        self.enemigo_sprite = self.canvas.create_rectangle(
+                            j*self.cell_size+5, i*self.cell_size+5,
+                            j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
+                            fill="yellow", tags="enemigo"
+                        )
+                        return
+
+        # Fallback: si no encontró celda aleatoria, reaparece cerca del jugador
+        for di, dj in [(-1,0),(1,0),(0,-1),(0,1)]:
+            ni, nj = ji+di, jj+dj
+            if 0 <= ni < alto and 0 <= nj < ancho and self.mapa[ni][nj] in (CAMINO, LIANA):
+                self.enemigo = Enemigo(ni, nj)
+                self.enemigo_sprite = self.canvas.create_rectangle(
+                    nj*self.cell_size+5, ni*self.cell_size+5,
+                    nj*self.cell_size+self.cell_size-5, ni*self.cell_size+self.cell_size-5,
+                    fill="yellow", tags="enemigo"
+                )
+                return
