@@ -1,7 +1,7 @@
 import time
 
 class Trampa:
-    def init(self, i, j):
+    def __init__(self, i, j):
         self.i = i
         self.j = j
         self.colocada_en = time.time()

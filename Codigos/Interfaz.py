@@ -71,7 +71,7 @@ class Interfaz:
                 self.trampas.append(trampa)
                 self.ultimo_colocada = ahora
                 # Dibujar trampa
-                trampa.id == self.canvas.create_rectangle(
+                trampa.id = self.canvas.create_rectangle(
                     j*self.cell_size+10, i*self.cell_size+10,
                     j*self.cell_size+self.cell_size-10, i*self.cell_size+self.cell_size-10,
                     fill="brown"
@@ -93,8 +93,8 @@ class Interfaz:
         for trampa in list(self.trampas):
             if (ei, ej) == trampa.posicion():
                 print("¡Enemigo atrapado por trampa!")
-                self.trampas.delete(trampa.id)
-                self.canvas.remove(trampa)
+                self.canvas.delete(trampa.id)
+                self.trampas.remove(trampa)
                 self.canvas.delete(self.enemigo_sprite)
                 # Respawn enemigo en 10 segundos
                 self.root.after(10000, self.respawn_enemigo)
