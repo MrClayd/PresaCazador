@@ -93,19 +93,30 @@ class Interfaz:
         for trampa in list(self.trampas):
             if (ei, ej) == trampa.posicion():
                 print("¡Enemigo atrapado por trampa!")
-                self.canvas.delete(trampa.id)
-                self.trampas.remove(trampa)
+
+                # 3. Eliminar la trampa usada
+                self.canvas.delete(trampa.id)   # borra el sprite de la trampa
+                self.trampas.remove(trampa)     # la quita de la lista
+
+                # 4. Liberar la celda del enemigo al morir
+                self.mapa[ei][ej] = CAMINO      # la celda vuelve a ser camino
+
+                # Eliminar enemigo
                 self.canvas.delete(self.enemigo_sprite)
-                # Respawn enemigo en 10 segundos
+                self.enemigo = None
+
+                # Respawn en 10 segundos
                 self.root.after(10000, self.respawn_enemigo)
 
         self.root.after(500, self.mover_enemigo)
 
     def respawn_enemigo(self):
+        if self.enemigo is None:
+            i, j = 10, 10
         # Reaparece en posición fija o aleatoria
-        self.enemigo = Enemigo(10, 10)
-        self.enemigo_sprite = self.canvas.create_rectangle(
-            10*self.cell_size+5, 10*self.cell_size+5,
-            10*self.cell_size+self.cell_size-5, 10*self.cell_size+self.cell_size-5,
+            self.enemigo = Enemigo(10, 10)
+            self.enemigo_sprite = self.canvas.create_rectangle(
+            j*self.cell_size+5, i*self.cell_size+5,
+            j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
             fill="yellow", tags="enemigo"
-        )
+            )
