@@ -28,12 +28,21 @@ class Interfaz:
         )
 
         # Enemigo inicial
-        self.enemigo = Enemigo(10, 10)  # posición inicial de prueba
-        self.enemigo_sprite = self.canvas.create_rectangle(
-            10*self.cell_size+5, 10*self.cell_size+5,
-            10*self.cell_size+self.cell_size-5, 10*self.cell_size+self.cell_size-5,
-            fill="yellow", tags="enemigo"
-        )
+        # Crear lista de enemigos: (enemigo_obj, sprite_id)
+        self.enemigos = []
+
+        # Crea 3 enemigos con posiciones distintas
+        posiciones_enemigos = [(10, 10), (5, 5), (12, 3)]
+
+        for (i, j) in posiciones_enemigos:
+            enemigo = Enemigo(i, j)
+            sprite = self.canvas.create_rectangle(
+                j*self.cell_size+5, i*self.cell_size+5,
+                j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
+                fill="yellow", tags="enemigo"
+            )
+            self.enemigos.append([enemigo, sprite])
+
 
         # Trampas
         self.trampas = []
@@ -115,36 +124,58 @@ class Interfaz:
                 )
 
     def mover_enemigo(self):
-        if self.enemigo is None:
+        if not self.enemigos:
             self.root.after(500, self.mover_enemigo)
             return
 
         ji, jj = self.jugador.posicion()
-        ei, ej = self.enemigo.posicion()
 
-        di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+        for enemigo_data in list(self.enemigos):
+            enemigo, sprite = enemigo_data
 
-        if self.enemigo.mover(di, dj, self.mapa, es_jugador=False):
-            ei, ej = self.enemigo.posicion()
-            x1, y1 = ej*self.cell_size+5, ei*self.cell_size+5
-            x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
-            self.canvas.coords(self.enemigo_sprite, x1, y1, x2, y2)
+            ei, ej = enemigo.posicion()
 
-        for trampa in list(self.trampas):
-            if (ei, ej) == trampa.posicion():
-                print("¡Enemigo atrapado por trampa!")
-                self.canvas.delete(trampa.id)
-                self.trampas.remove(trampa)
-                self.mapa[ei][ej] = CAMINO
-                self.canvas.delete(self.enemigo_sprite)
-                self.enemigo = None
-                self.root.after(10000, self.respawn_enemigo)
+            di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+
+            if enemigo.mover(di, dj, self.mapa, es_jugador=False):
+                ei, ej = enemigo.posicion()
+                x1, y1 = ej*self.cell_size+5, ei*self.cell_size+5
+                x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
+                self.canvas.coords(sprite, x1, y1, x2, y2)
+
+            for trampa in list(self.trampas):
+                if (ei, ej) == trampa.posicion():
+                    print("¡Enemigo atrapado por trampa!")
+                    self.canvas.delete(trampa.id)
+                    self.trampas.remove(trampa)
+
+                    self.canvas.delete(sprite)
+                    self.enemigos.remove(enemigo_data)
+
+                    self.root.after(10000, lambda: self.respawn_enemigo())
+                    break
 
         self.root.after(500, self.mover_enemigo)
 
+
     def respawn_enemigo(self):
-        if self.enemigo is not None:
-            return
+        alto, ancho = len(self.mapa), len(self.mapa[0])
+        ji, jj = self.jugador.posicion()
+
+        for _ in range(100):
+            i = random.randrange(1, alto-1)
+            j = random.randrange(1, ancho-1)
+
+            if (i, j) != (ji, jj) and self.mapa[i][j] in (CAMINO, LIANA):
+                enemigo = Enemigo(i, j)
+                sprite = self.canvas.create_rectangle(
+                    j*self.cell_size+5, i*self.cell_size+5,
+                    j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
+                    fill="yellow", tags="enemigo"
+                )
+                self.enemigos.append([enemigo, sprite])
+                return
+
 
         alto, ancho = len(self.mapa), len(self.mapa[0])
         ji, jj = self.jugador.posicion()
