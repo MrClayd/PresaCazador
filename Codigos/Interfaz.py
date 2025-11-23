@@ -8,7 +8,7 @@ from Energia import Energia
 from pathfinding import bfs
 
 class Interfaz:
-    def __init__(self, root, mapa, inicio, salida):
+    def __init__(self, root, mapa, inicio, salida, dificultad= "normal"):
         self.root = root
         self.mapa = mapa
         self.cell_size = 40
@@ -18,6 +18,13 @@ class Interfaz:
         self.canvas.pack()
 
         self.dibujar_mapa()
+
+        if dificultad == "facil":
+            self.velocidad_enemigo = 1500  # 1 segundo
+        elif dificultad == "normal":
+            self.velocidad_enemigo = 1000   # 0.5 segundos
+        elif dificultad == "dificil":
+            self.velocidad_enemigo = 500   # 0.25 segundos
 
         # Jugador
         self.jugador = Jugador(*inicio)
@@ -131,7 +138,7 @@ class Interfaz:
 
     def mover_enemigo(self):
         if not self.enemigos:
-            self.root.after(1000, self.mover_enemigo)
+            self.root.after(self.velocidad_enemigo, self.mover_enemigo)
             return
 
         posiciones_ocupadas = {enemigo.posicion() for enemigo, _ in self.enemigos}
@@ -184,7 +191,7 @@ class Interfaz:
                         self.root.after(10000, self.respawn_enemigo)
                         break
 
-        self.root.after(1000, self.mover_enemigo)
+        self.root.after(self.velocidad_enemigo, self.mover_enemigo)
 
 
     def respawn_enemigo(self):

@@ -2,12 +2,15 @@ import tkinter as tk
 from Mapa import generar_mapa
 from Interfaz import Interfaz
 
-def iniciar():
+def iniciar(dificultad="normal"):
+    # Crear ventana principal del juego
     root = tk.Tk()
-    root.title("Escapa del Cazador")
-    mapa, inicio, salida = generar_mapa(16, 16)  
-    Interfaz(root, mapa, inicio, salida)
-    root.mainloop()
+    root.title("Wild Bound")
 
-if __name__ == "__main__":
-    iniciar()
+    # Generar mapa
+    mapa, inicio, salida = generar_mapa(16,16)
+
+    # Crear interfaz con dificultad seleccionada
+    app = Interfaz(root, mapa, inicio, salida, dificultad=dificultad)
+
+    root.mainloop()
