@@ -27,10 +27,12 @@ class Interfaz:
             fill="red", tags="jugador"
         )
 
-        # Enemigos iniciales
+        # Enemigos iniciales con roles
         self.enemigos = []
         posiciones_generadas = set()
         intentos = 0
+        roles = ["cazador", "emboscador", "erratico"]
+
         while len(posiciones_generadas) < 3 and intentos < 500:
             intentos += 1
             i = random.randrange(1, alto-1)
@@ -38,8 +40,9 @@ class Interfaz:
             if (i, j) != tuple(inicio) and (i, j) not in posiciones_generadas and self.mapa[i][j] in (CAMINO, LIANA):
                 posiciones_generadas.add((i, j))
 
-        for (i, j) in posiciones_generadas:
+        for (i, j), rol in zip(posiciones_generadas, roles):
             enemigo = Enemigo(i, j)
+            enemigo.rol = rol
             sprite = self.canvas.create_rectangle(
                 j*self.cell_size+5, i*self.cell_size+5,
                 j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
@@ -128,19 +131,35 @@ class Interfaz:
 
     def mover_enemigo(self):
         if not self.enemigos:
-            self.root.after(500, self.mover_enemigo)
+            self.root.after(1000, self.mover_enemigo)
             return
 
         posiciones_ocupadas = {enemigo.posicion() for enemigo, _ in self.enemigos}
         ji, jj = self.jugador.posicion()
+        alto, ancho = len(self.mapa), len(self.mapa[0])
 
         for enemigo_data in list(self.enemigos):
             enemigo, sprite = enemigo_data
             ei, ej = enemigo.posicion()
-            di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
-            nuevo_i, nuevo_j = ei + di, ej + dj
 
-            alto, ancho = len(self.mapa), len(self.mapa[0])
+            # Decisión según rol
+            if enemigo.rol == "cazador":
+                di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+
+            elif enemigo.rol == "emboscador":
+                objetivo_i = ji + (ji - ei)
+                objetivo_j = jj + (jj - ej)
+                if not (0 <= objetivo_i < alto and 0 <= objetivo_j < ancho):
+                    objetivo_i, objetivo_j = ji, jj
+                di, dj = bfs(self.mapa, (ei, ej), (objetivo_i, objetivo_j), es_jugador=False)
+
+            elif enemigo.rol == "erratico":
+                if random.random() < 0.5:
+                    di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+                else:
+                    di, dj = random.choice([(-1,0),(1,0),(0,-1),(0,1)])
+
+            nuevo_i, nuevo_j = ei + di, ej + dj
             if not (0 <= nuevo_i < alto and 0 <= nuevo_j < ancho):
                 continue
             if (nuevo_i, nuevo_j) in posiciones_ocupadas:
@@ -163,31 +182,31 @@ class Interfaz:
                         self.canvas.delete(sprite)
                         self.enemigos.remove(enemigo_data)
                         self.root.after(10000, self.respawn_enemigo)
-                        break  # salir del bucle de trampas
+                        break
 
-        self.root.after(500, self.mover_enemigo)
+        self.root.after(1000, self.mover_enemigo)
 
 
     def respawn_enemigo(self):
         if len(self.enemigos) >= 3:
-            return
-        
+            return  # máximo 3 enemigos
+
         alto, ancho = len(self.mapa), len(self.mapa[0])
         ji, jj = self.jugador.posicion()
 
         for _ in range(300):
             i = random.randrange(1, alto-1)
             j = random.randrange(1, ancho-1)
-            # validar que la celda sea transitable y no esté ocupada por jugador ni por otro enemigo
-            ocupada = False
-            for e, _ in self.enemigos:
-                if (i, j) == e.posicion():
-                    ocupada = True
-                    break
-            if ocupada or (i, j) == (ji, jj):
+            if (i, j) == (ji, jj):
+                continue
+            if any((i, j) == e.posicion() for e, _ in self.enemigos):
                 continue
             if self.mapa[i][j] in (CAMINO, LIANA):
                 enemigo = Enemigo(i, j)
+
+                # Asignar rol aleatorio al nuevo enemigo
+                enemigo.rol = random.choice(["cazador", "emboscador", "erratico"])
+
                 sprite = self.canvas.create_rectangle(
                     j*self.cell_size+5, i*self.cell_size+5,
                     j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
@@ -195,6 +214,7 @@ class Interfaz:
                 )
                 self.enemigos.append([enemigo, sprite])
                 return
-        # Si no encontró sitio en X intentos, no hacer nada (evita crash)
+
+        # Si no encontró sitio en X intentos, no hacer nada
         print("Aviso: no se pudo respawnear enemigo; mapa demasiado lleno.")
                 
