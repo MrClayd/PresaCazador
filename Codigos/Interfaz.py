@@ -9,14 +9,14 @@ from pathfinding import bfs
 from tkinter import messagebox
 
 class Interfaz:
-    def __init__(self, root, mapa, inicio, salida, dificultad= "normal"):
+    def __init__(self, root, mapa, inicio, salida, dificultad= "normal",nombre="Jugador"):
         self.root = root
         self.mapa = mapa
         self.cell_size = 40
         self.salida = salida
         self.tiempo_inicio = time.time()
-
         self.dificultad = dificultad
+        self.nombre = nombre
 
         alto, ancho = len(mapa), len(mapa[0])
         self.canvas = tk.Canvas(root, width=ancho*self.cell_size, height=alto*self.cell_size)
@@ -138,7 +138,6 @@ class Interfaz:
         duracion = time.time() - self.tiempo_inicio
         base_puntaje = max(1000 - int(duracion), 0)
 
-        # Factor según dificultad
         if self.dificultad == "facil":
             factor = 1.0
         elif self.dificultad == "normal":
@@ -148,35 +147,37 @@ class Interfaz:
 
         puntaje = int(base_puntaje * factor)
 
-        messagebox.showinfo("¡Has llegado a la salida!",
-                            f"Tiempo: {duracion:.2f} segundos\nPuntaje: {puntaje}")
+        respuesta = messagebox.askyesno("¡Has llegado a la salida!",
+                            f"Tiempo: {duracion:.2f} segundos\n"
+                            f"Puntaje: {puntaje}\n\n¿Volver al menú?")
+        
+        self.root.after_cancel(self.mover_enemigo_id)
+        self.guardar_puntaje("modo_escapa", self.nombre, puntaje)
 
-        self.guardar_puntaje("modo_principal", puntaje)
         self.root.destroy()
+        if respuesta:  # si elige volver al menú 
+            import Interfaz_Menu
+            Interfaz_Menu.crear_menu()
 
-    def guardar_puntaje(self, modo, puntaje):
+    def guardar_puntaje(self, modo, nombre, puntaje):
         archivo = "puntajes.txt"
-        puntajes = {"modo_principal": [], "otro_modo": []}
+        puntajes = {"modo_escapa": [], "otro_modo": []}
 
-        # Leer archivo si existe
         try:
             with open(archivo, "r") as f:
                 for linea in f:
-                    modo_guardado, valor = linea.strip().split(":")
-                    puntajes[modo_guardado].append(int(valor))
+                    modo_guardado, jugador, valor = linea.strip().split(":")
+                    puntajes[modo_guardado].append((jugador, int(valor)))
         except FileNotFoundError:
             pass
 
-        # Agregar nuevo puntaje
-        puntajes[modo].append(puntaje)
-        puntajes[modo] = sorted(puntajes[modo], reverse=True)[:5]
+        puntajes[modo].append((nombre, puntaje))
+        puntajes[modo] = sorted(puntajes[modo], key=lambda x: x[1], reverse=True)[:5]
 
-        # Guardar archivo
         with open(archivo, "w") as f:
             for m in puntajes:
-                for p in puntajes[m]:
-                    f.write(f"{m}:{p}\n")
-
+                for jugador, p in puntajes[m]:
+                    f.write(f"{m}:{jugador}:{p}\n")
 
 
     def colocar_trampa(self):
@@ -248,7 +249,7 @@ class Interfaz:
                         self.root.after(10000, self.respawn_enemigo)
                         break
 
-        self.root.after(self.velocidad_enemigo, self.mover_enemigo)
+        self.mover_enemigo_id = self.root.after(self.velocidad_enemigo, self.mover_enemigo)
 
 
     def respawn_enemigo(self):

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 from Main import iniciar
+from tkinter import simpledialog
 
 imagenes = ["Imagenes\\ESE_1_M.png", "Imagenes\\ESE_2_M.png", "Imagenes\\ESE_3_M.png",
             "Imagenes\\ESE_9_M.png", "Imagenes\\ESE_3_VA_M.png", "Imagenes\\ESE_6_M.png"]
@@ -47,22 +48,28 @@ def crear_menu():
 
         tk.Label(dif_win, text="Elige la dificultad", font=("Arial", 18, "bold")).pack(pady=20)
 
+        # 🔑 Esta función pide el nombre y luego inicia el juego
+        def iniciar_con_nombre(dificultad):
+            nombre = simpledialog.askstring("Nombre", "Ingresa tu nombre:")
+            if nombre:  # solo si el jugador escribe algo
+                iniciar_juego(dif_win, ventana, dificultad, nombre)
+
+        # Botones de dificultad → llaman a iniciar_con_nombre
         tk.Button(dif_win, text="Fácil", font=("Arial", 14),
-                command=lambda: iniciar_juego(dif_win, ventana, "facil")).pack(pady=10)
+                command=lambda: iniciar_con_nombre("facil")).pack(pady=10)
         tk.Button(dif_win, text="Normal", font=("Arial", 14),
-                command=lambda: iniciar_juego(dif_win, ventana, "normal")).pack(pady=10)
+                command=lambda: iniciar_con_nombre("normal")).pack(pady=10)
         tk.Button(dif_win, text="Difícil", font=("Arial", 14),
-                command=lambda: iniciar_juego(dif_win, ventana, "dificil")).pack(pady=10)
+                command=lambda: iniciar_con_nombre("dificil")).pack(pady=10)
 
         # Botón para volver al menú
-        tk.Button(dif_win, text="Volver al menú",
-            command=lambda: volver_menu(dif_win, ventana),
-          **estilo_boton).pack(pady=20)
+        tk.Button(dif_win, text="Volver al menú", font=("Arial", 12),
+                command=lambda: volver_menu(dif_win, ventana)).pack(pady=20)
         
-    def iniciar_juego(dif_win, ventana, dificultad):
+    def iniciar_juego(dif_win, ventana, dificultad, nombre):
         dif_win.destroy()   # cerrar ventana de dificultad
         ventana.destroy()   # cerrar menú principal
-        iniciar(dificultad) # iniciar juego con dificultad
+        iniciar(dificultad, nombre) # iniciar juego con dificultad
 
     def volver_menu(dif_win, ventana):
         dif_win.destroy()
@@ -70,40 +77,52 @@ def crear_menu():
 
     def ver_puntajes():
         archivo = "puntajes.txt"
-        puntajes = {"modo_principal": [], "otro_modo": []}
+        puntajes = {"modo_escapa": [], "otro_modo": []}
 
         try:
             with open(archivo, "r") as f:
                 for linea in f:
-                    modo_guardado, valor = linea.strip().split(":")
-                    puntajes[modo_guardado].append(int(valor))
+                    partes = linea.strip().split(":")
+                    # Validar que la línea tenga exactamente 3 partes
+                    if len(partes) == 3:
+                        modo_guardado, jugador, valor = partes
+                        try:
+                            puntajes[modo_guardado].append((jugador, int(valor)))
+                        except ValueError:
+                            print(f"⚠️ Puntaje inválido en línea: {linea.strip()}")
+                    else:
+                        print(f"⚠️ Formato inválido en línea: {linea.strip()}")
         except FileNotFoundError:
             messagebox.showinfo("🏆 Puntajes", "No hay puntajes guardados aún.")
             return
 
-        texto = "🏆 Mejores Puntajes\n\n"
+        # Crear ventana nueva
+        win = tk.Toplevel()
+        win.title("🏆 Mejores Puntajes")
+        win.geometry("400x400")
+        win.resizable(False, False)
 
-        # Modo principal
-        texto += "🎮 Modo Principal:\n"
-        if puntajes["modo_principal"]:
-            for i, p in enumerate(sorted(puntajes["modo_principal"], reverse=True)[:5], 1):
-                texto += f"   {i}. ⭐ {p}\n"
+        titulo = tk.Label(win, text="🏆 Mejores Puntajes", font=("Arial", 18, "bold"))
+        titulo.pack(pady=10)
+
+        # --- Modo Escapa ---
+        tk.Label(win, text="🚪 Modo Escapa:", font=("Arial", 14, "bold")).pack(pady=5)
+        if puntajes["modo_escapa"]:
+            for i, (jugador, p) in enumerate(sorted(puntajes["modo_escapa"], key=lambda x: x[1], reverse=True)[:5], 1):
+                tk.Label(win, text=f"{i}. {jugador} ⭐ {p}", font=("Arial", 12)).pack()
         else:
-            texto += "   Sin puntajes registrados\n"
+            tk.Label(win, text="Sin puntajes registrados", font=("Arial", 12)).pack()
 
-        texto += "\n"
-
-        # Otro modo
-        texto += "🕹️ Otro Modo:\n"
+        # --- Otro Modo ---
+        tk.Label(win, text="🕹️ Otro Modo:", font=("Arial", 14, "bold")).pack(pady=10)
         if puntajes["otro_modo"]:
-            for i, p in enumerate(sorted(puntajes["otro_modo"], reverse=True)[:5], 1):
-                texto += f"   {i}. ⭐ {p}\n"
+            for i, (jugador, p) in enumerate(sorted(puntajes["otro_modo"], key=lambda x: x[1], reverse=True)[:5], 1):
+                tk.Label(win, text=f"{i}. {jugador} ⭐ {p}", font=("Arial", 12)).pack()
         else:
-            texto += "   Sin puntajes registrados\n"
+            tk.Label(win, text="Sin puntajes registrados", font=("Arial", 12)).pack()
 
-        messagebox.showinfo("🏆 Puntajes", texto)
-    
-
+        # Botón cerrar
+        tk.Button(win, text="Cerrar", command=win.destroy, font=("Arial", 12)).pack(pady=15)
     # --- Botones del menú principal ---
     estilo_boton = {
         "font": ("Arial", 14),
@@ -121,7 +140,7 @@ def crear_menu():
 
     tk.Button(ventana, text="Jugar", command=seleccionar_dificultad, **estilo_boton).place(x=810, y=250)
     tk.Button(ventana, text="Salir", command=ventana.destroy, **estilo_boton).place(x=810, y=600)
-    tk.Button(ventana, text="Ver Puntajes",  **estilo_boton).place(x=600, y=350)
+    tk.Button(ventana, text="Ver Puntajes", command=ver_puntajes, **estilo_boton).place(x=600, y=350)
     tk.Button(ventana, text="Personalización de Personaje", **estilo_boton).place(x=1000, y=350)
     tk.Button(ventana, text="Sonido", **estilo_boton).place(x=600, y=500)
     tk.Button(ventana, text="Instrucciones", **estilo_boton).place(x=1000, y=500)
