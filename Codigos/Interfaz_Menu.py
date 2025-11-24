@@ -68,6 +68,42 @@ def crear_menu():
         dif_win.destroy()
         ventana.deiconify()  # volver a mostrar menú principal
 
+    def ver_puntajes():
+        archivo = "puntajes.txt"
+        puntajes = {"modo_principal": [], "otro_modo": []}
+
+        try:
+            with open(archivo, "r") as f:
+                for linea in f:
+                    modo_guardado, valor = linea.strip().split(":")
+                    puntajes[modo_guardado].append(int(valor))
+        except FileNotFoundError:
+            messagebox.showinfo("🏆 Puntajes", "No hay puntajes guardados aún.")
+            return
+
+        texto = "🏆 Mejores Puntajes\n\n"
+
+        # Modo principal
+        texto += "🎮 Modo Principal:\n"
+        if puntajes["modo_principal"]:
+            for i, p in enumerate(sorted(puntajes["modo_principal"], reverse=True)[:5], 1):
+                texto += f"   {i}. ⭐ {p}\n"
+        else:
+            texto += "   Sin puntajes registrados\n"
+
+        texto += "\n"
+
+        # Otro modo
+        texto += "🕹️ Otro Modo:\n"
+        if puntajes["otro_modo"]:
+            for i, p in enumerate(sorted(puntajes["otro_modo"], reverse=True)[:5], 1):
+                texto += f"   {i}. ⭐ {p}\n"
+        else:
+            texto += "   Sin puntajes registrados\n"
+
+        messagebox.showinfo("🏆 Puntajes", texto)
+    
+
     # --- Botones del menú principal ---
     estilo_boton = {
         "font": ("Arial", 14),

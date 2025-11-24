@@ -6,12 +6,17 @@ from Entidades import Jugador, Enemigo
 from trampas import Trampa
 from Energia import Energia
 from pathfinding import bfs
+from tkinter import messagebox
 
 class Interfaz:
     def __init__(self, root, mapa, inicio, salida, dificultad= "normal"):
         self.root = root
         self.mapa = mapa
         self.cell_size = 40
+        self.salida = salida
+        self.tiempo_inicio = time.time()
+
+        self.dificultad = dificultad
 
         alto, ancho = len(mapa), len(mapa[0])
         self.canvas = tk.Canvas(root, width=ancho*self.cell_size, height=alto*self.cell_size)
@@ -118,9 +123,61 @@ class Interfaz:
             x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
             self.canvas.coords(self.jugador_sprite, x1, y1, x2, y2)
 
+            #Verificar llegada a la salida
+            if (i, j) == self.salida:
+                self.finalizar_partida()
+                return
+
+            
+
         self.ultimo_movimiento = ahora
         self.energia.regenerar()
         self.actualizar_barra_energia()
+
+    def finalizar_partida(self):
+        duracion = time.time() - self.tiempo_inicio
+        base_puntaje = max(1000 - int(duracion), 0)
+
+        # Factor según dificultad
+        if self.dificultad == "facil":
+            factor = 1.0
+        elif self.dificultad == "normal":
+            factor = 1.5
+        elif self.dificultad == "dificil":
+            factor = 2.0
+
+        puntaje = int(base_puntaje * factor)
+
+        messagebox.showinfo("¡Has llegado a la salida!",
+                            f"Tiempo: {duracion:.2f} segundos\nPuntaje: {puntaje}")
+
+        self.guardar_puntaje("modo_principal", puntaje)
+        self.root.destroy()
+
+    def guardar_puntaje(self, modo, puntaje):
+        archivo = "puntajes.txt"
+        puntajes = {"modo_principal": [], "otro_modo": []}
+
+        # Leer archivo si existe
+        try:
+            with open(archivo, "r") as f:
+                for linea in f:
+                    modo_guardado, valor = linea.strip().split(":")
+                    puntajes[modo_guardado].append(int(valor))
+        except FileNotFoundError:
+            pass
+
+        # Agregar nuevo puntaje
+        puntajes[modo].append(puntaje)
+        puntajes[modo] = sorted(puntajes[modo], reverse=True)[:5]
+
+        # Guardar archivo
+        with open(archivo, "w") as f:
+            for m in puntajes:
+                for p in puntajes[m]:
+                    f.write(f"{m}:{p}\n")
+
+
 
     def colocar_trampa(self):
         ahora = time.time()
