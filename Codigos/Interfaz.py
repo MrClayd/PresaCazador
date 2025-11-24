@@ -64,7 +64,7 @@ class Interfaz:
         # Energía
         self.energia = Energia(max_energia=10)
         self.ultimo_movimiento = 0
-        self.cooldown = 1  # segundos
+        self.cooldown = 0.5  # segundos
 
         # Barra de energía
         self.energia_bar = tk.Canvas(root, width=200, height=20, bg="gray")
