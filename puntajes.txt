@@ -1,1 +1,2 @@
 modo_escapa:w:1968
+modo_escapa:Wilson:1968

@@ -83,7 +83,6 @@ def crear_menu():
             with open(archivo, "r") as f:
                 for linea in f:
                     partes = linea.strip().split(":")
-                    # Validar que la línea tenga exactamente 3 partes
                     if len(partes) == 3:
                         modo_guardado, jugador, valor = partes
                         try:
@@ -96,10 +95,13 @@ def crear_menu():
             messagebox.showinfo("🏆 Puntajes", "No hay puntajes guardados aún.")
             return
 
-        # Crear ventana nueva
-        win = tk.Toplevel()
+        # 🔑 Cerrar el menú principal antes de abrir puntajes
+        ventana.destroy()
+
+        # Crear ventana de puntajes
+        win = tk.Tk()
         win.title("🏆 Mejores Puntajes")
-        win.geometry("400x400")
+        win.geometry("400x450")
         win.resizable(False, False)
 
         titulo = tk.Label(win, text="🏆 Mejores Puntajes", font=("Arial", 18, "bold"))
@@ -121,8 +123,13 @@ def crear_menu():
         else:
             tk.Label(win, text="Sin puntajes registrados", font=("Arial", 12)).pack()
 
-        # Botón cerrar
-        tk.Button(win, text="Cerrar", command=win.destroy, font=("Arial", 12)).pack(pady=15)
+        # --- Botones ---
+        tk.Button(win, text="Volver al menú", font=("Arial", 12),
+                command=lambda: [win.destroy(), crear_menu()]).pack(pady=10)
+
+        win.mainloop()
+
+
     # --- Botones del menú principal ---
     estilo_boton = {
         "font": ("Arial", 14),
