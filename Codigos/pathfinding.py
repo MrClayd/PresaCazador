@@ -1,5 +1,5 @@
 from collections import deque
-from Mapa import CAMINO, LIANA, TUNEL
+from Mapa import Camino, Liana, Tunel, Salida
 import heapq
 
 def hay_camino_enemigo(mapa, inicio):
@@ -12,7 +12,8 @@ def hay_camino_enemigo(mapa, inicio):
         for di, dj in [(-1,0),(1,0),(0,-1),(0,1)]:
             ni, nj = i+di, j+dj
             if 0 <= ni < alto and 0 <= nj < ancho:
-                if mapa[ni][nj] in (CAMINO, LIANA) and (ni, nj) not in visit:
+                celda = mapa[ni][nj]
+                if celda.permite_enemigo() and (ni, nj) not in visit:
                     visit.add((ni, nj))
                     q.append((ni, nj))
     return len(visit) > 1  # si solo visitó su celda, está encerrado
@@ -35,14 +36,13 @@ def bfs(mapa, inicio, objetivo, es_jugador=False):
             ni, nj = i+di, j+dj
             if 0 <= ni < alto and 0 <= nj < ancho:
                 celda = mapa[ni][nj]
-                if es_jugador and celda in (CAMINO, TUNEL):
+                if es_jugador and celda.permite_jugador():
                     cola.append(((ni, nj), camino+[(di, dj)]))
-                elif not es_jugador and celda in (CAMINO, LIANA):
+                elif not es_jugador and celda.permite_enemigo():
                     cola.append(((ni, nj), camino+[(di, dj)]))
     return (0, 0)
 
-
-#prueba de esqueleto A*
+# --- A* con heurística Manhattan ---
 def heuristica(a, b):
     """Distancia Manhattan como heurística."""
     return abs(a[0]-b[0]) + abs(a[1]-b[1])
@@ -68,7 +68,7 @@ def astar(mapa, inicio, objetivo, es_jugador=False):
             ni, nj = i+di, j+dj
             if 0 <= ni < alto and 0 <= nj < ancho:
                 celda = mapa[ni][nj]
-                valido = (es_jugador and celda in (CAMINO, TUNEL)) or (not es_jugador and celda in (CAMINO, LIANA))
+                valido = (es_jugador and celda.permite_jugador()) or (not es_jugador and celda.permite_enemigo())
                 if valido:
                     nuevo_g = g_score[(i, j)] + 1
                     if (ni, nj) not in g_score or nuevo_g < g_score[(ni, nj)]:

@@ -1,4 +1,4 @@
-from Mapa import CAMINO, LIANA, TUNEL, SALIDA
+from Mapa import Camino, Liana, Tunel, Salida
 
 class EntidadBase:
     def __init__(self, i, j, velocidad=1):
@@ -10,15 +10,19 @@ class EntidadBase:
         return self.i, self.j
 
     def mover(self, di, dj, mapa, es_jugador=False):
-        """Intenta mover la entidad en la dirección indicada."""
         ni, nj = self.i + di, self.j + dj
         alto, ancho = len(mapa), len(mapa[0])
         if 0 <= ni < alto and 0 <= nj < ancho:
             celda = mapa[ni][nj]
-            if es_jugador and celda in (CAMINO, TUNEL, SALIDA):
+            if es_jugador and celda.permite_jugador():
                 self.i, self.j = ni, nj
+                # Acciones especiales
+                if isinstance(celda, Tunel):
+                    celda.usar(self)
+                elif isinstance(celda, Liana):
+                    celda.usar(self)
                 return True
-            elif not es_jugador and celda in (CAMINO, LIANA):
+            elif not es_jugador and celda.permite_enemigo():
                 self.i, self.j = ni, nj
                 return True
         return False

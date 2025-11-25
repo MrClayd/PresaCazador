@@ -1,15 +1,16 @@
 import tkinter as tk
 import time
 import random
-from Mapa import tipo_de_celda, CAMINO, LIANA
+from Mapa import Camino, Liana, Tunel, Muro, Salida
 from Entidades import Jugador, Enemigo
 from trampas import Trampa
 from Energia import Energia
 from pathfinding import bfs
 from tkinter import messagebox
 
+
 class Interfaz:
-    def __init__(self, root, mapa, inicio, salida, dificultad= "normal",nombre="Jugador"):
+    def __init__(self, root, mapa, inicio, salida, dificultad="normal", nombre="Jugador"):
         self.root = root
         self.mapa = mapa
         self.cell_size = 40
@@ -26,11 +27,11 @@ class Interfaz:
         self.dibujar_mapa()
 
         if dificultad == "facil":
-            self.velocidad_enemigo = 1500  # 1 segundo
+            self.velocidad_enemigo = 1500
         elif dificultad == "normal":
-            self.velocidad_enemigo = 1000   # 0.5 segundos
+            self.velocidad_enemigo = 1000
         elif dificultad == "dificil":
-            self.velocidad_enemigo = 500   # 0.25 segundos
+            self.velocidad_enemigo = 500
 
         # Jugador
         self.jugador = Jugador(*inicio)
@@ -50,7 +51,9 @@ class Interfaz:
             intentos += 1
             i = random.randrange(1, alto-1)
             j = random.randrange(1, ancho-1)
-            if (i, j) != tuple(inicio) and (i, j) not in posiciones_generadas and self.mapa[i][j] in (CAMINO, LIANA):
+            if (i, j) != tuple(inicio) and (i, j) not in posiciones_generadas and (
+                isinstance(self.mapa[i][j], Camino) or isinstance(self.mapa[i][j], Liana)
+            ):
                 posiciones_generadas.add((i, j))
 
         for (i, j), rol in zip(posiciones_generadas, roles):
@@ -70,7 +73,7 @@ class Interfaz:
         # Energía
         self.energia = Energia(max_energia=10)
         self.ultimo_movimiento = 0
-        self.cooldown = 0.5  # segundos
+        self.cooldown = 0.5
 
         # Barra de energía
         self.energia_bar = tk.Canvas(root, width=200, height=20, bg="gray")
@@ -94,7 +97,7 @@ class Interfaz:
         alto, ancho = len(self.mapa), len(self.mapa[0])
         for i in range(alto):
             for j in range(ancho):
-                celda = tipo_de_celda(self.mapa[i][j])
+                celda = self.mapa[i][j]
                 x1, y1 = j*self.cell_size, i*self.cell_size
                 x2, y2 = x1+self.cell_size, y1+self.cell_size
                 self.canvas.create_rectangle(x1, y1, x2, y2, fill=celda.color(), outline="black")
@@ -124,12 +127,9 @@ class Interfaz:
             x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
             self.canvas.coords(self.jugador_sprite, x1, y1, x2, y2)
 
-            #Verificar llegada a la salida
             if (i, j) == self.salida:
                 self.finalizar_partida()
                 return
-
-            
 
         self.ultimo_movimiento = ahora
         self.energia.regenerar()
@@ -146,16 +146,13 @@ class Interfaz:
         elif self.dificultad == "dificil":
             factor = 2.0
 
-        puntaje_final = int(base_puntaje * factor) + self.puntaje  # incluir bono acumulado
+        puntaje_final = int(base_puntaje * factor) + self.puntaje
 
-        # Guardar puntaje
         self.root.after_cancel(self.mover_enemigo_id)
         self.guardar_puntaje("modo_escapa", self.nombre, puntaje_final)
 
-        # Cerrar ventana de juego
         self.root.destroy()
 
-        # Crear ventana de fin de juego
         fin = tk.Tk()
         fin.title("🎉 Fin del Juego")
         fin.geometry("500x400")
@@ -165,9 +162,8 @@ class Interfaz:
         tk.Label(fin, text=f"⏱ Tiempo: {duracion:.2f} segundos", font=("Arial", 14)).pack(pady=10)
         tk.Label(fin, text=f"⭐ Puntaje: {puntaje_final}", font=("Arial", 14)).pack(pady=10)
 
-        # Botones
         tk.Button(fin, text="Volver al menú", font=("Arial", 14),
-                command=lambda: [fin.destroy(), __import__("Interfaz_Menu").crear_menu()]).pack(pady=20)
+                  command=lambda: [fin.destroy(), __import__("Interfaz_Menu").crear_menu()]).pack(pady=20)
         tk.Button(fin, text="Salir", font=("Arial", 14), command=fin.destroy).pack(pady=10)
 
         fin.mainloop()
@@ -192,12 +188,11 @@ class Interfaz:
                 for jugador, p in puntajes[m]:
                     f.write(f"{m}:{jugador}:{p}\n")
 
-
     def colocar_trampa(self):
         ahora = time.time()
         if len(self.trampas) < 3 and (ahora - self.ultimo_colocada) >= 5:
             i, j = self.jugador.posicion()
-            if self.mapa[i][j] == CAMINO:
+            if isinstance(self.mapa[i][j], Camino):  # ahora usamos la clase
                 trampa = Trampa(i, j)
                 self.trampas.append(trampa)
                 self.ultimo_colocada = ahora
@@ -256,18 +251,17 @@ class Interfaz:
                         print("¡Enemigo atrapado por trampa!")
                         self.canvas.delete(trampa.id)
                         self.trampas.remove(trampa)
-                        self.mapa[ei][ej] = CAMINO
+                        self.mapa[ei][ej] = Camino(ei, ej)  # reemplazamos por objeto Camino
                         self.canvas.delete(sprite)
                         self.enemigos.remove(enemigo_data)
 
                         # --- Bono por eliminar enemigo con trampa ---
-                        self.puntaje += 50  # ejemplo: +50 puntos por cada enemigo eliminado
+                        self.puntaje += 50
 
                         self.root.after(10000, self.respawn_enemigo)
                         break
 
         self.mover_enemigo_id = self.root.after(self.velocidad_enemigo, self.mover_enemigo)
-
 
     def respawn_enemigo(self):
         if len(self.enemigos) >= 3:
@@ -283,12 +277,9 @@ class Interfaz:
                 continue
             if any((i, j) == e.posicion() for e, _ in self.enemigos):
                 continue
-            if self.mapa[i][j] in (CAMINO, LIANA):
+            if isinstance(self.mapa[i][j], Camino) or isinstance(self.mapa[i][j], Liana):
                 enemigo = Enemigo(i, j)
-
-                # Asignar rol aleatorio al nuevo enemigo
                 enemigo.rol = random.choice(["cazador", "emboscador", "erratico"])
-
                 sprite = self.canvas.create_rectangle(
                     j*self.cell_size+5, i*self.cell_size+5,
                     j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
@@ -297,6 +288,4 @@ class Interfaz:
                 self.enemigos.append([enemigo, sprite])
                 return
 
-        # Si no encontró sitio en X intentos, no hacer nada
         print("Aviso: no se pudo respawnear enemigo; mapa demasiado lleno.")
-                
