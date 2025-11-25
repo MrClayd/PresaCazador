@@ -17,6 +17,7 @@ class Interfaz:
         self.tiempo_inicio = time.time()
         self.dificultad = dificultad
         self.nombre = nombre
+        self.puntaje = 0
 
         alto, ancho = len(mapa), len(mapa[0])
         self.canvas = tk.Canvas(root, width=ancho*self.cell_size, height=alto*self.cell_size)
@@ -145,19 +146,31 @@ class Interfaz:
         elif self.dificultad == "dificil":
             factor = 2.0
 
-        puntaje = int(base_puntaje * factor)
+        puntaje_final = int(base_puntaje * factor) + self.puntaje  # incluir bono acumulado
 
-        respuesta = messagebox.askyesno("¡Has llegado a la salida!",
-                            f"Tiempo: {duracion:.2f} segundos\n"
-                            f"Puntaje: {puntaje}\n\n¿Volver al menú?")
-        
+        # Guardar puntaje
         self.root.after_cancel(self.mover_enemigo_id)
-        self.guardar_puntaje("modo_escapa", self.nombre, puntaje)
+        self.guardar_puntaje("modo_escapa", self.nombre, puntaje_final)
 
+        # Cerrar ventana de juego
         self.root.destroy()
-        if respuesta:  # si elige volver al menú 
-            import Interfaz_Menu
-            Interfaz_Menu.crear_menu()
+
+        # Crear ventana de fin de juego
+        fin = tk.Tk()
+        fin.title("🎉 Fin del Juego")
+        fin.geometry("500x400")
+        fin.resizable(False, False)
+
+        tk.Label(fin, text="¡Has llegado a la salida!", font=("Arial", 20, "bold")).pack(pady=20)
+        tk.Label(fin, text=f"⏱ Tiempo: {duracion:.2f} segundos", font=("Arial", 14)).pack(pady=10)
+        tk.Label(fin, text=f"⭐ Puntaje: {puntaje_final}", font=("Arial", 14)).pack(pady=10)
+
+        # Botones
+        tk.Button(fin, text="Volver al menú", font=("Arial", 14),
+                command=lambda: [fin.destroy(), __import__("Interfaz_Menu").crear_menu()]).pack(pady=20)
+        tk.Button(fin, text="Salir", font=("Arial", 14), command=fin.destroy).pack(pady=10)
+
+        fin.mainloop()
 
     def guardar_puntaje(self, modo, nombre, puntaje):
         archivo = "puntajes.txt"
@@ -246,6 +259,10 @@ class Interfaz:
                         self.mapa[ei][ej] = CAMINO
                         self.canvas.delete(sprite)
                         self.enemigos.remove(enemigo_data)
+
+                        # --- Bono por eliminar enemigo con trampa ---
+                        self.puntaje += 50  # ejemplo: +50 puntos por cada enemigo eliminado
+
                         self.root.after(10000, self.respawn_enemigo)
                         break
 

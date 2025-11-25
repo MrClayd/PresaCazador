@@ -1,2 +1,5 @@
+modo_escapa:S:2042
+modo_escapa:a:1970
 modo_escapa:w:1968
 modo_escapa:Wilson:1968
+modo_escapa:hjkh:1950

@@ -48,10 +48,6 @@ def heuristica(a, b):
     return abs(a[0]-b[0]) + abs(a[1]-b[1])
 
 def astar(mapa, inicio, objetivo, es_jugador=False):
-    """
-    Algoritmo A* para encontrar el camino más corto.
-    Retorna el primer paso (di, dj) desde inicio hacia objetivo.
-    """
     alto, ancho = len(mapa), len(mapa[0])
     open_set = []
     heapq.heappush(open_set, (0, inicio, []))
