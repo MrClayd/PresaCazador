@@ -23,6 +23,8 @@ class Interfaz:
         self.nombre = nombre
         self.puntaje = 0
         self.modo = modo
+        self.enemigos_atrapados = 0
+        self.enemigos_escapados = 0 
 
         alto, ancho = len(mapa), len(mapa[0])
         self.canvas = tk.Canvas(root, width=ancho*self.cell_size, height=alto*self.cell_size)
@@ -137,11 +139,30 @@ class Interfaz:
             di *= 2
             dj *= 2
 
-        if self.jugador.mover(di, dj, self.mapa, es_jugador=True):
-            i, j = self.jugador.posicion()
+        # --- Siempre obtener posición actual del jugador ---
+        moved = self.jugador.mover(di, dj, self.mapa, es_jugador=True)
+        i, j = self.jugador.posicion()   # ✅ siempre definido
+
+        if moved:
             x1, y1 = j*self.cell_size+5, i*self.cell_size+5
             x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
             self.canvas.coords(self.jugador_sprite, x1, y1, x2, y2)
+
+        if self.modo == "cazador":
+            # Si el jugador entra en la celda de un enemigo
+            for enemigo_data in list(self.enemigos):
+                enemigo, sprite = enemigo_data
+                if (i, j) == enemigo.posicion():
+                    print("¡Jugador atrapó a un cazador!")
+                    self.canvas.delete(sprite)
+                    self.enemigos.remove(enemigo_data)
+                    self.puntaje += 100
+                    self.enemigos_atrapados += 1   # ✅ ahora sí cuenta
+                    if self.enemigos_atrapados >= 3:   # condición de victoria
+                        self.finalizar_partida_cazador(victoria=True)
+                        return
+                    self.respawn_enemigo()
+                    self.actualizar_hud_roles()
 
             if (i, j) == self.salida:
                 self.finalizar_partida()
@@ -150,6 +171,7 @@ class Interfaz:
         self.ultimo_movimiento = ahora
         self.energia.regenerar()
         self.actualizar_barra_energia()
+
 
     def finalizar_partida(self):
         duracion = time.time() - self.tiempo_inicio
@@ -186,7 +208,7 @@ class Interfaz:
 
     def guardar_puntaje(self, modo, nombre, puntaje):
         archivo = "puntajes.txt"
-        puntajes = {"modo_escapa": [], "otro_modo": []}
+        puntajes = {"modo_escapa": [], "modo_cazador": []}
 
         try:
             with open(archivo, "r") as f:
@@ -223,7 +245,7 @@ class Interfaz:
 
     def mover_enemigo(self):
         if not self.enemigos:
-            self.root.after(self.velocidad_enemigo, self.mover_enemigo)
+            self.mover_enemigo_id = self.root.after(self.velocidad_enemigo, self.mover_enemigo)
             return
 
         posiciones_ocupadas = {enemigo.posicion() for enemigo, _ in self.enemigos}
@@ -236,9 +258,27 @@ class Interfaz:
 
             # --- Decisión según modo ---
             if self.modo == "cazador":
-                # En este modo los enemigos intentan huir hacia la salida
                 objetivo = self.salida  # tupla (i, j)
                 di, dj = astar(self.mapa, (ei, ej), objetivo, es_jugador=False)
+
+                # Evitar al jugador si está cerca
+                dist_jugador = abs(ei - ji) + abs(ej - jj)
+                if dist_jugador <= 3:
+                    # Elegir dirección ortogonal (no diagonal)
+                    if abs(ei - ji) > abs(ej - jj):
+                        # Priorizar eje vertical
+                        if ji < ei: di, dj = 1, 0   # jugador arriba → enemigo baja
+                        elif ji > ei: di, dj = -1, 0
+                    else:
+                        # Priorizar eje horizontal
+                        if jj < ej: di, dj = 0, 1   # jugador izquierda → enemigo derecha
+                        elif jj > ej: di, dj = 0, -1
+
+                    # Fallback: si la celda elegida no es válida, elegir otra dirección aleatoria
+                    nuevo_i, nuevo_j = ei + di, ej + dj
+                    if not (0 <= nuevo_i < alto and 0 <= nuevo_j < ancho) or not self.mapa[nuevo_i][nuevo_j].permite_enemigo():
+                        di, dj = random.choice([(-1,0),(1,0),(0,-1),(0,1)])
+
             else:
                 # --- Decisión según rol (modo escapa) ---
                 if enemigo.rol == "cazador":
@@ -287,18 +327,28 @@ class Interfaz:
                         self.canvas.delete(sprite)
                         self.enemigos.remove(enemigo_data)
                         self.puntaje += 100
+                        self.enemigos_atrapados += 1
+                        if self.enemigos_atrapados >= 3:  # condición de victoria
+                            self.finalizar_partida_cazador(victoria=True)
+                            return
                         self.respawn_enemigo()
                         self.actualizar_hud_roles()
                         continue
+
                     # Enemigo llega a salida
                     if (ei, ej) == self.salida:
                         print("¡Un cazador escapó!")
                         self.canvas.delete(sprite)
                         self.enemigos.remove(enemigo_data)
                         self.puntaje -= 50
+                        self.enemigos_escapados += 1
+                        if self.enemigos_escapados >= 5:  # condición de derrota
+                            self.finalizar_partida_cazador(victoria=False)
+                            return
                         self.respawn_enemigo()
                         self.actualizar_hud_roles()
                         continue
+
                 else:
                     # --- Colisión con jugador (modo escapa) ---
                     if (ei, ej) == (ji, jj):
@@ -396,3 +446,29 @@ class Interfaz:
             # Texto con color según rol
             self.hud_roles.create_text(x, y, anchor="nw", text=texto, font=("Arial", 12), fill=color)
             y += 20
+
+    def finalizar_partida_cazador(self, victoria=True):
+        self.root.after_cancel(self.mover_enemigo_id)
+        modo = "modo_cazador"
+        puntaje_final = self.puntaje
+
+        self.guardar_puntaje(modo, self.nombre, puntaje_final)
+        self.root.destroy()
+
+        fin = tk.Tk()
+        fin.title("🏆 Fin del Modo Cazador")
+        fin.geometry("500x400")
+        fin.resizable(False, False)
+
+        if victoria:
+            tk.Label(fin, text="¡Has atrapado suficientes cazadores!", font=("Arial", 20, "bold")).pack(pady=20)
+        else:
+            tk.Label(fin, text="Demasiados cazadores escaparon 😢", font=("Arial", 20, "bold")).pack(pady=20)
+
+        tk.Label(fin, text=f"⭐ Puntaje: {puntaje_final}", font=("Arial", 14)).pack(pady=10)
+
+        tk.Button(fin, text="Volver al menú", font=("Arial", 14),
+                command=lambda: [fin.destroy(), __import__("Interfaz_Menu").crear_menu()]).pack(pady=20)
+        tk.Button(fin, text="Salir", font=("Arial", 14), command=fin.destroy).pack(pady=10)
+
+        fin.mainloop()
