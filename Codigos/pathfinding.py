@@ -68,7 +68,12 @@ def astar(mapa, inicio, objetivo, es_jugador=False):
             ni, nj = i+di, j+dj
             if 0 <= ni < alto and 0 <= nj < ancho:
                 celda = mapa[ni][nj]
-                valido = (es_jugador and celda.permite_jugador()) or (not es_jugador and celda.permite_enemigo())
+
+                if (ni, nj) == objetivo:
+                    valido = True
+                else:
+                    valido = (es_jugador and celda.permite_jugador()) or (not es_jugador and celda.permite_enemigo())
+
                 if valido:
                     nuevo_g = g_score[(i, j)] + 1
                     if (ni, nj) not in g_score or nuevo_g < g_score[(ni, nj)]:

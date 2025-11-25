@@ -38,9 +38,25 @@ def crear_menu():
 
     rotar_imagen()
 
-    # --- NUEVO: ventana de dificultad ---
-    def seleccionar_dificultad():
-        ventana.withdraw()  # ocultar menú principal
+    # --- Selección de modo ---
+    def seleccionar_modo():
+        ventana.withdraw()
+        modo_win = tk.Toplevel()
+        modo_win.title("Seleccionar Modo")
+        modo_win.geometry("400x300")
+        modo_win.resizable(False, False)
+
+        tk.Label(modo_win, text="Elige el modo de juego", font=("Arial", 18, "bold")).pack(pady=20)
+
+        tk.Button(modo_win, text="🚪 Modo 1: Escapa", font=("Arial", 14),
+                command=lambda: seleccionar_dificultad(modo_win, ventana, "escapa")).pack(pady=10)
+
+        tk.Button(modo_win, text="🎯 Modo 2: Cazador", font=("Arial", 14),
+                command=lambda: seleccionar_dificultad(modo_win, ventana, "cazador")).pack(pady=10)
+
+    # --- Selección de dificultad con nombre ---
+    def seleccionar_dificultad(modo_win, ventana, modo):
+        modo_win.destroy()
         dif_win = tk.Toplevel()
         dif_win.title("Seleccionar Dificultad")
         dif_win.geometry("400x400")
@@ -48,13 +64,11 @@ def crear_menu():
 
         tk.Label(dif_win, text="Elige la dificultad", font=("Arial", 18, "bold")).pack(pady=20)
 
-        # 🔑 Esta función pide el nombre y luego inicia el juego
         def iniciar_con_nombre(dificultad):
             nombre = simpledialog.askstring("Nombre", "Ingresa tu nombre:")
-            if nombre:  # solo si el jugador escribe algo
-                iniciar_juego(dif_win, ventana, dificultad, nombre)
+            if nombre:
+                iniciar_juego(dif_win, ventana, dificultad, nombre, modo)
 
-        # Botones de dificultad → llaman a iniciar_con_nombre
         tk.Button(dif_win, text="Fácil", font=("Arial", 14),
                 command=lambda: iniciar_con_nombre("facil")).pack(pady=10)
         tk.Button(dif_win, text="Normal", font=("Arial", 14),
@@ -62,22 +76,22 @@ def crear_menu():
         tk.Button(dif_win, text="Difícil", font=("Arial", 14),
                 command=lambda: iniciar_con_nombre("dificil")).pack(pady=10)
 
-        # Botón para volver al menú
         tk.Button(dif_win, text="Volver al menú", font=("Arial", 12),
                 command=lambda: volver_menu(dif_win, ventana)).pack(pady=20)
-        
-    def iniciar_juego(dif_win, ventana, dificultad, nombre):
-        dif_win.destroy()   # cerrar ventana de dificultad
-        ventana.destroy()   # cerrar menú principal
-        iniciar(dificultad, nombre) # iniciar juego con dificultad
+
+    def iniciar_juego(dif_win, ventana, dificultad, nombre, modo="escapa"):
+        dif_win.destroy()
+        ventana.destroy()
+        import Main
+        Main.iniciar(dificultad, nombre, modo)
 
     def volver_menu(dif_win, ventana):
         dif_win.destroy()
-        ventana.deiconify()  # volver a mostrar menú principal
+        ventana.deiconify()
 
     def ver_puntajes():
         archivo = "puntajes.txt"
-        puntajes = {"modo_escapa": [], "otro_modo": []}
+        puntajes = {"modo_escapa": [], "modo_cazador": []}
 
         try:
             with open(archivo, "r") as f:
@@ -89,23 +103,17 @@ def crear_menu():
                             puntajes[modo_guardado].append((jugador, int(valor)))
                         except ValueError:
                             print(f"⚠️ Puntaje inválido en línea: {linea.strip()}")
-                    else:
-                        print(f"⚠️ Formato inválido en línea: {linea.strip()}")
         except FileNotFoundError:
             messagebox.showinfo("🏆 Puntajes", "No hay puntajes guardados aún.")
             return
 
-        # 🔑 Cerrar el menú principal antes de abrir puntajes
         ventana.destroy()
-
-        # Crear ventana de puntajes
         win = tk.Tk()
         win.title("🏆 Mejores Puntajes")
-        win.geometry("400x450")
+        win.geometry("400x500")
         win.resizable(False, False)
 
-        titulo = tk.Label(win, text="🏆 Mejores Puntajes", font=("Arial", 18, "bold"))
-        titulo.pack(pady=10)
+        tk.Label(win, text="🏆 Mejores Puntajes", font=("Arial", 18, "bold")).pack(pady=10)
 
         # --- Modo Escapa ---
         tk.Label(win, text="🚪 Modo Escapa:", font=("Arial", 14, "bold")).pack(pady=5)
@@ -115,20 +123,18 @@ def crear_menu():
         else:
             tk.Label(win, text="Sin puntajes registrados", font=("Arial", 12)).pack()
 
-        # --- Otro Modo ---
-        tk.Label(win, text="🕹️ Otro Modo:", font=("Arial", 14, "bold")).pack(pady=10)
-        if puntajes["otro_modo"]:
-            for i, (jugador, p) in enumerate(sorted(puntajes["otro_modo"], key=lambda x: x[1], reverse=True)[:5], 1):
+        # --- Modo Cazador ---
+        tk.Label(win, text="🎯 Modo Cazador:", font=("Arial", 14, "bold")).pack(pady=10)
+        if puntajes["modo_cazador"]:
+            for i, (jugador, p) in enumerate(sorted(puntajes["modo_cazador"], key=lambda x: x[1], reverse=True)[:5], 1):
                 tk.Label(win, text=f"{i}. {jugador} ⭐ {p}", font=("Arial", 12)).pack()
         else:
             tk.Label(win, text="Sin puntajes registrados", font=("Arial", 12)).pack()
 
-        # --- Botones ---
         tk.Button(win, text="Volver al menú", font=("Arial", 12),
-                command=lambda: [win.destroy(), crear_menu()]).pack(pady=10)
+                    command=lambda: [win.destroy(), crear_menu()]).pack(pady=10)
 
         win.mainloop()
-
 
     # --- Botones del menú principal ---
     estilo_boton = {
@@ -145,7 +151,7 @@ def crear_menu():
     titulo = tk.Label(ventana, text="Wild bound", font=("Arial", 72, "bold"), bg=Transparente, fg="#CE9B1C")
     titulo.place(x=700, y=100)
 
-    tk.Button(ventana, text="Jugar", command=seleccionar_dificultad, **estilo_boton).place(x=810, y=250)
+    tk.Button(ventana, text="Jugar", command=seleccionar_modo, **estilo_boton).place(x=810, y=250)
     tk.Button(ventana, text="Salir", command=ventana.destroy, **estilo_boton).place(x=810, y=600)
     tk.Button(ventana, text="Ver Puntajes", command=ver_puntajes, **estilo_boton).place(x=600, y=350)
     tk.Button(ventana, text="Personalización de Personaje", **estilo_boton).place(x=1000, y=350)
@@ -154,5 +160,4 @@ def crear_menu():
 
     ventana.mainloop()
 
-# --- Ejecutar menú principal ---
 crear_menu()

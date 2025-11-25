@@ -10,15 +10,19 @@ from tkinter import messagebox
 
 
 class Interfaz:
-    def __init__(self, root, mapa, inicio, salida, dificultad="normal", nombre="Jugador"):
+    def __init__(self, root, mapa, inicio, salida, dificultad="normal", nombre="Jugador", modo="escapa"):
         self.root = root
         self.mapa = mapa
         self.cell_size = 40
-        self.salida = salida
+        if isinstance(salida, Salida):
+            self.salida = (salida.i, salida.j)
+        else:
+            self.salida = salida  # ya es tupla (i, j)
         self.tiempo_inicio = time.time()
         self.dificultad = dificultad
         self.nombre = nombre
         self.puntaje = 0
+        self.modo = modo
 
         alto, ancho = len(mapa), len(mapa[0])
         self.canvas = tk.Canvas(root, width=ancho*self.cell_size, height=alto*self.cell_size)
@@ -45,7 +49,6 @@ class Interfaz:
         self.enemigos = []
         posiciones_generadas = set()
         intentos = 0
-        roles = ["cazador", "emboscador", "erratico"]
 
         while len(posiciones_generadas) < 3 and intentos < 500:
             intentos += 1
@@ -56,9 +59,15 @@ class Interfaz:
             ):
                 posiciones_generadas.add((i, j))
 
-        for (i, j), rol in zip(posiciones_generadas, roles):
+        for (i, j) in posiciones_generadas:
             enemigo = Enemigo(i, j)
-            enemigo.rol = rol
+            if self.modo == "cazador":
+                # en modo cazador todos los enemigos son cazadores
+                enemigo.rol = "cazador"
+            else:
+                # en modo escapa asigna roles variados
+                enemigo.rol = random.choice(["cazador", "emboscador", "erratico", "acechador", "patrullero"])
+
             sprite = self.canvas.create_rectangle(
                 j*self.cell_size+5, i*self.cell_size+5,
                 j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
@@ -196,6 +205,9 @@ class Interfaz:
                     f.write(f"{m}:{jugador}:{p}\n")
 
     def colocar_trampa(self):
+        if self.modo == "cazador":
+            return
+
         ahora = time.time()
         if len(self.trampas) < 3 and (ahora - self.ultimo_colocada) >= 5:
             i, j = self.jugador.posicion()
@@ -222,43 +234,36 @@ class Interfaz:
             enemigo, sprite = enemigo_data
             ei, ej = enemigo.posicion()
 
-            # --- Decisión según rol ---
-            if enemigo.rol == "cazador":
-                # Usa A* para ir directo al jugador
-                di, dj = astar(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
-
-            elif enemigo.rol == "emboscador":
-                # Intenta adelantarse a la posición futura del jugador
-                objetivo_i = ji + (ji - ei)
-                objetivo_j = jj + (jj - ej)
-                if not (0 <= objetivo_i < alto and 0 <= objetivo_j < ancho):
-                    objetivo_i, objetivo_j = ji, jj
-                di, dj = bfs(self.mapa, (ei, ej), (objetivo_i, objetivo_j), es_jugador=False)
-
-            elif enemigo.rol == "erratico":
-                # Mezcla azar y persecución
-                if random.random() < 0.5:
-                    di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
-                else:
-                    di, dj = random.choice([(-1,0),(1,0),(0,-1),(0,1)])
-
-            elif enemigo.rol == "acechador":
-                # Solo persigue si está cerca
-                dist = abs(ei - ji) + abs(ej - jj)
-                if dist < 6:
-                    di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
-                else:
-                    di, dj = (0, 0)  # se queda quieto
-
-            elif enemigo.rol == "patrullero":
-                # Patrulla en línea horizontal
-                if random.random() < 0.5:
-                    di, dj = (0, 1)
-                else:
-                    di, dj = (0, -1)
-
+            # --- Decisión según modo ---
+            if self.modo == "cazador":
+                # En este modo los enemigos intentan huir hacia la salida
+                objetivo = self.salida  # tupla (i, j)
+                di, dj = astar(self.mapa, (ei, ej), objetivo, es_jugador=False)
             else:
-                di, dj = (0, 0)
+                # --- Decisión según rol (modo escapa) ---
+                if enemigo.rol == "cazador":
+                    di, dj = astar(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+                elif enemigo.rol == "emboscador":
+                    objetivo_i = ji + (ji - ei)
+                    objetivo_j = jj + (jj - ej)
+                    if not (0 <= objetivo_i < alto and 0 <= objetivo_j < ancho):
+                        objetivo_i, objetivo_j = ji, jj
+                    di, dj = bfs(self.mapa, (ei, ej), (objetivo_i, objetivo_j), es_jugador=False)
+                elif enemigo.rol == "erratico":
+                    if random.random() < 0.5:
+                        di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+                    else:
+                        di, dj = random.choice([(-1,0),(1,0),(0,-1),(0,1)])
+                elif enemigo.rol == "acechador":
+                    dist = abs(ei - ji) + abs(ej - jj)
+                    if dist < 6:
+                        di, dj = bfs(self.mapa, (ei, ej), (ji, jj), es_jugador=False)
+                    else:
+                        di, dj = (0, 0)
+                elif enemigo.rol == "patrullero":
+                    di, dj = (0, 1) if random.random() < 0.5 else (0, -1)
+                else:
+                    di, dj = (0, 0)
 
             # --- Movimiento ---
             nuevo_i, nuevo_j = ei + di, ej + dj
@@ -275,25 +280,44 @@ class Interfaz:
                 x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
                 self.canvas.coords(sprite, x1, y1, x2, y2)
 
-                # --- Colisión con jugador ---
-                if (ei, ej) == (ji, jj):
-                    print("¡El enemigo atrapó al jugador!")
-                    self.finalizar_derrota()
-                    return
-
-                # --- Trampas ---
-                for trampa in list(self.trampas):
-                    if (ei, ej) == trampa.posicion():
-                        print("¡Enemigo atrapado por trampa!")
-                        self.canvas.delete(trampa.id)
-                        self.trampas.remove(trampa)
-                        self.mapa[ei][ej] = Camino(ei, ej)
+                if self.modo == "cazador":
+                    # Jugador atrapa enemigo
+                    if (ei, ej) == (ji, jj):
+                        print("¡Jugador atrapó a un cazador!")
                         self.canvas.delete(sprite)
                         self.enemigos.remove(enemigo_data)
-                        self.puntaje += 50
-                        self.root.after(10000, self.respawn_enemigo)
+                        self.puntaje += 100
+                        self.respawn_enemigo()
                         self.actualizar_hud_roles()
-                        break
+                        continue
+                    # Enemigo llega a salida
+                    if (ei, ej) == self.salida:
+                        print("¡Un cazador escapó!")
+                        self.canvas.delete(sprite)
+                        self.enemigos.remove(enemigo_data)
+                        self.puntaje -= 50
+                        self.respawn_enemigo()
+                        self.actualizar_hud_roles()
+                        continue
+                else:
+                    # --- Colisión con jugador (modo escapa) ---
+                    if (ei, ej) == (ji, jj):
+                        print("¡El enemigo atrapó al jugador!")
+                        self.finalizar_derrota()
+                        return
+                    # --- Trampas ---
+                    for trampa in list(self.trampas):
+                        if (ei, ej) == trampa.posicion():
+                            print("¡Enemigo atrapado por trampa!")
+                            self.canvas.delete(trampa.id)
+                            self.trampas.remove(trampa)
+                            self.mapa[ei][ej] = Camino(ei, ej)
+                            self.canvas.delete(sprite)
+                            self.enemigos.remove(enemigo_data)
+                            self.puntaje += 50
+                            self.root.after(10000, self.respawn_enemigo)
+                            self.actualizar_hud_roles()
+                            break
 
         self.mover_enemigo_id = self.root.after(self.velocidad_enemigo, self.mover_enemigo)
 
@@ -314,8 +338,10 @@ class Interfaz:
             if isinstance(self.mapa[i][j], Camino) or isinstance(self.mapa[i][j], Liana):
                 enemigo = Enemigo(i, j)
 
-                # --- Asignar rol aleatorio al nuevo enemigo ---
-                enemigo.rol = random.choice(["cazador", "emboscador", "erratico", "acechador", "patrullero"])
+                if self.modo == "cazador":
+                    enemigo.rol = "cazador"
+                else:
+                    enemigo.rol = random.choice(["cazador", "emboscador", "erratico", "acechador", "patrullero"])
 
                 sprite = self.canvas.create_rectangle(
                     j*self.cell_size+5, i*self.cell_size+5,
@@ -325,8 +351,6 @@ class Interfaz:
                 self.enemigos.append([enemigo, sprite])
                 self.actualizar_hud_roles()
                 return
-
-    print("Aviso: no se pudo respawnear enemigo; mapa demasiado lleno.")
 
     def finalizar_derrota(self):
     # Puntaje cero en derrota

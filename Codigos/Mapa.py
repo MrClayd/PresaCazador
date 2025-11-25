@@ -80,7 +80,7 @@ class Salida(CeldaBase):
         return True
 
     def permite_enemigo(self):
-        return False
+        return True
 
     def color(self):
         return "gold"
@@ -127,7 +127,7 @@ def generar_mapa(ancho=16, alto=16):
 
 
 # --- Validación de camino ---
-def hay_camino_valido(mapa, inicio, salida):
+def hay_camino_valido(mapa, inicio, salida, es_jugador=True):
     alto, ancho = len(mapa), len(mapa[0])
     q = deque([inicio])
     visit = {inicio}
@@ -139,7 +139,8 @@ def hay_camino_valido(mapa, inicio, salida):
             ni, nj = i+di, j+dj
             if 0 <= ni < alto and 0 <= nj < ancho:
                 celda = mapa[ni][nj]
-                if celda.permite_jugador() and (ni, nj) not in visit:
-                    visit.add((ni, nj))
-                    q.append((ni, nj))
+                if (es_jugador and celda.permite_jugador()) or (not es_jugador and celda.permite_enemigo()):
+                    if (ni, nj) not in visit:
+                        visit.add((ni, nj))
+                        q.append((ni, nj))
     return False
