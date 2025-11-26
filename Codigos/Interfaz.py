@@ -39,7 +39,8 @@ class Interfaz:
         if isinstance(salida, Salida):
             self.salida = (salida.i, salida.j)
         else:
-            self.salida = salida  # ya es tupla (i, j)
+            self.salida = salida 
+
         self.tiempo_inicio = time.time()
         self.dificultad = dificultad
         self.nombre = nombre
@@ -47,6 +48,9 @@ class Interfaz:
         self.modo = modo
         self.enemigos_atrapados = 0
         self.enemigos_escapados = 0 
+        self.enemigos = []
+        posiciones_generadas = set()
+        intentos = 0
 
         alto, ancho = len(mapa), len(mapa[0])
         self.canvas = tk.Canvas(root, width=ancho*self.cell_size, height=alto*self.cell_size)
@@ -80,7 +84,18 @@ class Interfaz:
         posiciones_generadas = set()
         intentos = 0
 
-        while len(posiciones_generadas) < 3 and intentos < 500:
+
+        if self.modo == "escapa":
+            if self.dificultad == "facil":
+                num_enemigos = 3
+            elif self.dificultad == "normal":
+                num_enemigos = 4
+            elif self.dificultad == "dificil":
+                num_enemigos = 5
+        else:
+            num_enemigos = 3  # en modo cazador siempre 3
+
+        while len(posiciones_generadas) < num_enemigos and intentos < 500:
             intentos += 1
             i = random.randrange(1, alto-1)
             j = random.randrange(1, ancho-1)
@@ -221,16 +236,16 @@ class Interfaz:
                     self.canvas.delete(sprite)
                     self.enemigos.remove(enemigo_data)
                     self.puntaje += 100
-                    self.enemigos_atrapados += 1   # ✅ ahora sí cuenta
-                    if self.enemigos_atrapados >= 3:   # condición de victoria
+                    self.enemigos_atrapados += 1   #
+                    if self.enemigos_atrapados >= 3:   
                         self.finalizar_partida_cazador(victoria=True)
                         return
                     self.respawn_enemigo()
                     self.actualizar_hud_roles()
 
-            if (i, j) == self.salida:
-                self.finalizar_partida()
-                return
+        if (i, j) == self.salida:
+            self.finalizar_partida()
+            return
 
         self.ultimo_movimiento = ahora
         self.energia.regenerar()
