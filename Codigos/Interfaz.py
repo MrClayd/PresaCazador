@@ -18,7 +18,7 @@ class Interfaz:
         from tkinter import PhotoImage
         try:
             Liana.imagen = PhotoImage(file="Codigos/Pictures/LianasF.png")
-            Muro.imagen = tk.PhotoImage(file="Codigos\Pictures\MurosF.png")
+            Muro.imagen = tk.PhotoImage(file="Codigos\Pictures\MurosFNW.png")
             Tunel.imagen = tk.PhotoImage(file="Codigos\Pictures\TunelF.png")
     # ajustar tamaño si es necesario (ej: si la imagen es 80x80 y cell_size=40)
             if Muro.imagen.width() > self.cell_size or Muro.imagen.height() > self.cell_size:
