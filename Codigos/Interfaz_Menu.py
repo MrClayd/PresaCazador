@@ -69,10 +69,27 @@ def crear_menu():
 
         def iniciar_con_nombre(dificultad):
             dif_win.destroy()
-            nombre = simpledialog.askstring("Nombre", "Ingresa tu nombre:")
-            if nombre:
-                iniciar_juego(dif_win, ventana, dificultad, nombre, modo)
+            nombre_win = tk.Toplevel()
+            nombre_win.title("Ingresar nombre")
+            nombre_win.geometry("400x200")
+            nombre_win.resizable(False, False)
 
+            tk.Label(nombre_win, text="Ingresa tu nombre:", font=("Arial", 14)).pack(pady=10)
+            entry_nombre = tk.Entry(nombre_win, font=("Arial", 12))
+            entry_nombre.pack(pady=10)
+
+            def confirmar_nombre():
+                nombre = entry_nombre.get()
+                if nombre:
+                    nombre_win.destroy()
+                    iniciar_juego(dif_win, ventana, dificultad, nombre, modo)
+
+            tk.Button(nombre_win, text="OK", font=("Arial", 12),
+                    command=confirmar_nombre).pack(pady=5)
+
+            tk.Button(nombre_win, text="Atrás", font=("Arial", 12),
+                    command=lambda: [nombre_win.destroy(), seleccionar_dificultad(None, ventana, modo)]).pack(pady=5)
+            
         tk.Button(dif_win, text="Fácil", font=("Arial", 14),
                 command=lambda: iniciar_con_nombre("facil")).pack(pady=10)
         tk.Button(dif_win, text="Normal", font=("Arial", 14),
