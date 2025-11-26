@@ -41,11 +41,15 @@ class Interfaz:
 
         # Jugador
         self.jugador = Jugador(*inicio)
-        self.jugador_sprite = self.canvas.create_oval(
-            inicio[1]*self.cell_size+5, inicio[0]*self.cell_size+5,
-            inicio[1]*self.cell_size+self.cell_size-5, inicio[0]*self.cell_size+self.cell_size-5,
-            fill="red", tags="jugador"
+        self.jugador_imagen = tk.PhotoImage(file="Codigos\Pictures\DFaventurero.png")
+        self.jugador_sprite = self.canvas.create_image(
+            inicio[1]*self.cell_size + self.cell_size//2,
+            inicio[0]*self.cell_size + self.cell_size//2,
+            image=self.jugador_imagen,
+            anchor="center",
+            tags="jugador"
         )
+        
 
         # Enemigos iniciales con roles
         self.enemigos = []
@@ -144,9 +148,9 @@ class Interfaz:
         i, j = self.jugador.posicion()   # ✅ siempre definido
 
         if moved:
-            x1, y1 = j*self.cell_size+5, i*self.cell_size+5
-            x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
-            self.canvas.coords(self.jugador_sprite, x1, y1, x2, y2)
+            x = j*self.cell_size + self.cell_size//2
+            y = i*self.cell_size + self.cell_size//2
+            self.canvas.coords(self.jugador_sprite, x, y)
 
         if self.modo == "cazador":
             # Si el jugador entra en la celda de un enemigo
