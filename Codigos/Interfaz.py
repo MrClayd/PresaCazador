@@ -14,6 +14,14 @@ class Interfaz:
         self.root = root
         self.mapa = mapa
         self.cell_size = 40
+
+        from tkinter import PhotoImage
+        try:
+            Liana.imagen = PhotoImage(file="Codigos/Pictures/LianasF.png")
+        except:
+            print("Error cargando imagen Liana")
+
+
         if isinstance(salida, Salida):
             self.salida = (salida.i, salida.j)
         else:
@@ -124,9 +132,21 @@ class Interfaz:
         for i in range(alto):
             for j in range(ancho):
                 celda = self.mapa[i][j]
-                x1, y1 = j*self.cell_size, i*self.cell_size
-                x2, y2 = x1+self.cell_size, y1+self.cell_size
-                self.canvas.create_rectangle(x1, y1, x2, y2, fill=celda.color(), outline="black")
+                x = j*self.cell_size
+                y = i*self.cell_size
+
+                if isinstance(celda, Liana) and Liana.imagen:
+                    self.canvas.create_image(
+                        x + self.cell_size//2,
+                        y + self.cell_size//2,
+                        image=Liana.imagen
+                    )
+                else:
+                    self.canvas.create_rectangle(
+                        x, y, x+self.cell_size, y+self.cell_size,
+                        fill=celda.color(), outline="black"
+                    )
+
 
     def actualizar_barra_energia(self):
         self.energia_bar.delete("all")
