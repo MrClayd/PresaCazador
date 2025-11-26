@@ -42,6 +42,8 @@ class Interfaz:
         # Jugador
         self.jugador = Jugador(*inicio)
         self.jugador_imagen = tk.PhotoImage(file="Codigos\Pictures\PersonajeF.png")
+        self.enemigo_imagen = tk.PhotoImage(file="Codigos/Pictures/CazadorF.png")
+
         self.jugador_sprite = self.canvas.create_image(
             inicio[1]*self.cell_size + self.cell_size//2,
             inicio[0]*self.cell_size + self.cell_size//2,
@@ -74,10 +76,12 @@ class Interfaz:
                 # en modo escapa asigna roles variados
                 enemigo.rol = random.choice(["cazador", "emboscador", "erratico", "acechador", "patrullero"])
 
-            sprite = self.canvas.create_rectangle(
-                j*self.cell_size+5, i*self.cell_size+5,
-                j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
-                fill="yellow", tags="enemigo"
+            sprite = self.canvas.create_image(
+                j*self.cell_size + self.cell_size//2,
+                i*self.cell_size + self.cell_size//2,
+                image=self.enemigo_imagen,
+                anchor="center",
+                tags="enemigo"
             )
             self.enemigos.append([enemigo, sprite])
             
@@ -320,9 +324,10 @@ class Interfaz:
             if enemigo.mover(di, dj, self.mapa, es_jugador=False):
                 posiciones_ocupadas.add((nuevo_i, nuevo_j))
                 ei, ej = enemigo.posicion()
-                x1, y1 = ej*self.cell_size+5, ei*self.cell_size+5
-                x2, y2 = x1+self.cell_size-10, y1+self.cell_size-10
-                self.canvas.coords(sprite, x1, y1, x2, y2)
+
+                x = ej*self.cell_size + self.cell_size//2
+                y = ei*self.cell_size + self.cell_size//2
+                self.canvas.coords(sprite, x, y)
 
                 if self.modo == "cazador":
                     # Jugador atrapa enemigo
@@ -397,10 +402,12 @@ class Interfaz:
                 else:
                     enemigo.rol = random.choice(["cazador", "emboscador", "erratico", "acechador", "patrullero"])
 
-                sprite = self.canvas.create_rectangle(
-                    j*self.cell_size+5, i*self.cell_size+5,
-                    j*self.cell_size+self.cell_size-5, i*self.cell_size+self.cell_size-5,
-                    fill="yellow", tags="enemigo"
+                sprite = self.canvas.create_image(
+                    j*self.cell_size + self.cell_size//2,
+                    i*self.cell_size + self.cell_size//2,
+                    image=self.enemigo_imagen,
+                    anchor="center",
+                    tags="enemigo"
                 )
                 self.enemigos.append([enemigo, sprite])
                 self.actualizar_hud_roles()
