@@ -64,6 +64,9 @@ def crear_menu():
 
         tk.Label(dif_win, text="Elige la dificultad", font=("Arial", 18, "bold")).pack(pady=20)
 
+        tk.Button(dif_win, text="Atrás", font=("Arial", 12),
+            command=lambda: [dif_win.destroy(), seleccionar_modo()]).pack(pady=20)
+
         def iniciar_con_nombre(dificultad):
             dif_win.destroy()
             nombre = simpledialog.askstring("Nombre", "Ingresa tu nombre:")

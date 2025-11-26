@@ -236,13 +236,22 @@ class Interfaz:
                     self.canvas.delete(sprite)
                     self.enemigos.remove(enemigo_data)
                     self.puntaje += 100
-                    self.enemigos_atrapados += 1   #
-                    if self.enemigos_atrapados >= 3:   
+                    self.enemigos_atrapados += 1
+                    if self.enemigos_atrapados >= 3:   # condición de victoria
                         self.finalizar_partida_cazador(victoria=True)
                         return
                     self.respawn_enemigo()
                     self.actualizar_hud_roles()
 
+        else:  # modo escapa
+            for enemigo_data in list(self.enemigos):
+                enemigo, sprite = enemigo_data
+                if (i, j) == enemigo.posicion():
+                    print("¡Has chocado con un enemigo!")
+                    self.finalizar_derrota()
+                    return
+
+        #  salida funciona en ambos modos
         if (i, j) == self.salida:
             self.finalizar_partida()
             return
@@ -250,6 +259,7 @@ class Interfaz:
         self.ultimo_movimiento = ahora
         self.energia.regenerar()
         self.actualizar_barra_energia()
+
 
 
     def finalizar_partida(self):
@@ -452,8 +462,21 @@ class Interfaz:
         self.mover_enemigo_id = self.root.after(self.velocidad_enemigo, self.mover_enemigo)
 
     def respawn_enemigo(self):
-        if len(self.enemigos) >= 3:
-            return  # máximo 3 enemigos
+        # --- Ajuste según dificultad ---
+        if self.modo == "escapa":
+            if self.dificultad == "facil":
+                max_enemigos = 3
+            elif self.dificultad == "normal":
+                max_enemigos = 4
+            elif self.dificultad == "dificil":
+                max_enemigos = 5
+            else:
+                max_enemigos = 3
+        else:
+            max_enemigos = 3  # en modo cazador siempre 3
+
+        if len(self.enemigos) >= max_enemigos:
+            return  # no respawnear si ya hay el máximo
 
         alto, ancho = len(self.mapa), len(self.mapa[0])
         ji, jj = self.jugador.posicion()
@@ -483,6 +506,7 @@ class Interfaz:
                 self.enemigos.append([enemigo, sprite])
                 self.actualizar_hud_roles()
                 return
+
 
     def finalizar_derrota(self):
     # Puntaje cero en derrota
