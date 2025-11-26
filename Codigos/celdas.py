@@ -7,17 +7,41 @@ class CeldaBase:
         return False
 
 class Muro(CeldaBase):
-    def es_transitable(self, es_jugador=False):
+    imagen = None
+    def __init__(self, i, j):
+        super().__init__(i, j)
+
+    def permite_jugador(self):
         return False
 
+    def permite_enemigo(self):
+        return False
+
+    def color(self):
+        return "black"
+    
 class Camino(CeldaBase):
     def es_transitable(self, es_jugador=False):
         return True
 
 class Tunel(CeldaBase):
-    def __init__(self, i, j, salida):
+    imagen = None
+    def __init__(self, i, j, salida=None):
         super().__init__(i, j)
         self.salida = salida
+
+    def permite_jugador(self):
+        return True
+
+    def permite_enemigo(self):
+        return False
+
+    def usar(self, entidad):
+        if self.salida:
+            entidad.i, entidad.j = self.salida
+
+    def color(self):
+        return "blue"
 
     def es_transitable(self, es_jugador=False):
         return True

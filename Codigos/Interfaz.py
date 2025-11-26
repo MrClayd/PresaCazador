@@ -18,10 +18,24 @@ class Interfaz:
         from tkinter import PhotoImage
         try:
             Liana.imagen = PhotoImage(file="Codigos/Pictures/LianasF.png")
-        except:
-            print("Error cargando imagen Liana")
+            Muro.imagen = tk.PhotoImage(file="Codigos\Pictures\MurosF.png")
+            Tunel.imagen = tk.PhotoImage(file="Codigos\Pictures\TunelF.png")
+    # ajustar tamaño si es necesario (ej: si la imagen es 80x80 y cell_size=40)
+            if Muro.imagen.width() > self.cell_size or Muro.imagen.height() > self.cell_size:
+                factor_x = max(1, Muro.imagen.width() // self.cell_size)
+                factor_y = max(1, Muro.imagen.height() // self.cell_size)
+                Muro.imagen = Muro.imagen.subsample(factor_x, factor_y)
 
+            if Tunel.imagen.width() > self.cell_size or Tunel.imagen.height() > self.cell_size:
+                factor_x = max(1, Tunel.imagen.width() // self.cell_size)
+                factor_y = max(1, Tunel.imagen.height() // self.cell_size)
+                Tunel.imagen = Tunel.imagen.subsample(factor_x, factor_y)
 
+        except Exception as e:
+            print("No se pudieron cargar imágenes de muros/túneles:", e)
+            Muro.imagen = None
+            Tunel.imagen = None
+            
         if isinstance(salida, Salida):
             self.salida = (salida.i, salida.j)
         else:
@@ -135,13 +149,35 @@ class Interfaz:
                 x = j*self.cell_size
                 y = i*self.cell_size
 
-                if isinstance(celda, Liana) and Liana.imagen:
+                # Liana (ya lo tienes)
+                if isinstance(celda, Liana) and getattr(Liana, "imagen", None):
                     self.canvas.create_image(
                         x + self.cell_size//2,
                         y + self.cell_size//2,
-                        image=Liana.imagen
+                        image=Liana.imagen,
+                        anchor="center"
                     )
+
+                # Muro con imagen
+                elif isinstance(celda, Muro) and getattr(Muro, "imagen", None):
+                    self.canvas.create_image(
+                        x + self.cell_size//2,
+                        y + self.cell_size//2,
+                        image=Muro.imagen,
+                        anchor="center"
+                    )
+
+                # Tunel con imagen
+                elif isinstance(celda, Tunel) and getattr(Tunel, "imagen", None):
+                    self.canvas.create_image(
+                        x + self.cell_size//2,
+                        y + self.cell_size//2,
+                        image=Tunel.imagen,
+                        anchor="center"
+                    )
+
                 else:
+                    # Dibujo por defecto si no hay imagen
                     self.canvas.create_rectangle(
                         x, y, x+self.cell_size, y+self.cell_size,
                         fill=celda.color(), outline="black"
