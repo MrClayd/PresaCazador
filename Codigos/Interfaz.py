@@ -41,7 +41,7 @@ class Interfaz:
 
         # Jugador
         self.jugador = Jugador(*inicio)
-        self.jugador_imagen = tk.PhotoImage(file="Codigos\Pictures\DFaventurero.png")
+        self.jugador_imagen = tk.PhotoImage(file="Codigos\Pictures\PersonajeF.png")
         self.jugador_sprite = self.canvas.create_image(
             inicio[1]*self.cell_size + self.cell_size//2,
             inicio[0]*self.cell_size + self.cell_size//2,
