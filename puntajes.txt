@@ -1,1 +1,2 @@
+modo_escapa:a:978
 modo_escapa:vasquez:0
