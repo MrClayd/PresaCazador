@@ -1,2 +1,7 @@
 modo_escapa:a:978
 modo_escapa:vasquez:0
+modo_escapa:qwe:0
+modo_escapa:weq:0
+modo_escapa:qwe:0
+modo_escapa:qwe:0
+modo_cazador:qwe:-250
