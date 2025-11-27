@@ -8,19 +8,21 @@ from Energia import Energia
 from pathfinding import bfs, astar
 from tkinter import messagebox
 
-
+#interfaz principal del juego
 class Interfaz:
     def __init__(self, root, mapa, inicio, salida, dificultad="normal", nombre="Jugador", modo="escapa"):
         self.root = root
         self.mapa = mapa
         self.cell_size = 40
 
+        #cargado de imagenes
         from tkinter import PhotoImage
         try:
             Liana.imagen = PhotoImage(file="Codigos/Pictures/LianasF.png")
             Muro.imagen = tk.PhotoImage(file="Codigos\Pictures\MurosFNW.png")
             Tunel.imagen = tk.PhotoImage(file="Codigos\Pictures\TunelF.png")
-    # ajustar tamaño si es necesario (ej: si la imagen es 80x80 y cell_size=40)
+
+            # ajustar tamaño 
             if Muro.imagen.width() > self.cell_size or Muro.imagen.height() > self.cell_size:
                 factor_x = max(1, Muro.imagen.width() // self.cell_size)
                 factor_y = max(1, Muro.imagen.height() // self.cell_size)
@@ -36,11 +38,13 @@ class Interfaz:
             Muro.imagen = None
             Tunel.imagen = None
             
+        #configuracion de la salida
         if isinstance(salida, Salida):
             self.salida = (salida.i, salida.j)
         else:
             self.salida = salida 
 
+        #Variables de juego
         self.tiempo_inicio = time.time()
         self.dificultad = dificultad
         self.nombre = nombre
@@ -52,12 +56,14 @@ class Interfaz:
         posiciones_generadas = set()
         intentos = 0
 
+        #Canva principal del mapa
         alto, ancho = len(mapa), len(mapa[0])
         self.canvas = tk.Canvas(root, width=ancho*self.cell_size, height=alto*self.cell_size)
         self.canvas.pack()
-
         self.dibujar_mapa()
 
+
+        #velocidad de enemigos segun la dificultad
         if dificultad == "facil":
             self.velocidad_enemigo = 1500
         elif dificultad == "normal":
@@ -70,6 +76,7 @@ class Interfaz:
         self.jugador_imagen = tk.PhotoImage(file="Codigos\Pictures\PersonajeF.png")
         self.enemigo_imagen = tk.PhotoImage(file="Codigos/Pictures/CazadorF.png")
 
+        #sprite de jugador
         self.jugador_sprite = self.canvas.create_image(
             inicio[1]*self.cell_size + self.cell_size//2,
             inicio[0]*self.cell_size + self.cell_size//2,
@@ -84,7 +91,7 @@ class Interfaz:
         posiciones_generadas = set()
         intentos = 0
 
-
+        #Cantidad de enemigos segun la dificultad
         if self.modo == "escapa":
             if self.dificultad == "facil":
                 num_enemigos = 3
@@ -95,6 +102,8 @@ class Interfaz:
         else:
             num_enemigos = 3  # en modo cazador siempre 3
 
+
+        #generar los enemigos en posiciones validas
         while len(posiciones_generadas) < num_enemigos and intentos < 500:
             intentos += 1
             i = random.randrange(1, alto-1)
@@ -153,7 +162,6 @@ class Interfaz:
         self.root.bind("<Shift-Left>", lambda e: self.mover_jugador(0, -1, correr=True))
         self.root.bind("<Shift-Right>", lambda e: self.mover_jugador(0, 1, correr=True))
         self.root.bind("<space>", lambda e: self.colocar_trampa())
-
         self.mover_enemigo()
 
     def dibujar_mapa(self):
@@ -164,7 +172,7 @@ class Interfaz:
                 x = j*self.cell_size
                 y = i*self.cell_size
 
-                # Liana (ya lo tienes)
+                # Liana 
                 if isinstance(celda, Liana) and getattr(Liana, "imagen", None):
                     self.canvas.create_image(
                         x + self.cell_size//2,
@@ -207,6 +215,7 @@ class Interfaz:
         self.energia_bar.create_rectangle(0, 0, ancho, 20, fill=color)
 
     def mover_jugador(self, di, dj, correr=False):
+        #control de cd
         ahora = time.time()
         if ahora - self.ultimo_movimiento < self.cooldown:
             return
@@ -218,10 +227,11 @@ class Interfaz:
             di *= 2
             dj *= 2
 
-        # --- Siempre obtener posición actual del jugador ---
+        # Siempre obtener posición actual del jugador 
         moved = self.jugador.mover(di, dj, self.mapa, es_jugador=True)
-        i, j = self.jugador.posicion()   # ✅ siempre definido
+        i, j = self.jugador.posicion()   
 
+        #verificar si el movimiento es valido
         if moved:
             x = j*self.cell_size + self.cell_size//2
             y = i*self.cell_size + self.cell_size//2
@@ -237,7 +247,7 @@ class Interfaz:
                     self.enemigos.remove(enemigo_data)
                     self.puntaje += 100
                     self.enemigos_atrapados += 1
-                    if self.enemigos_atrapados >= 3:   # condición de victoria
+                    if self.enemigos_atrapados >= 3:   # condición de victoria (editable)
                         self.finalizar_partida_cazador(victoria=True)
                         return
                     self.respawn_enemigo()
@@ -295,6 +305,7 @@ class Interfaz:
 
         fin.mainloop()
 
+        #guardado de puntajes
     def guardar_puntaje(self, modo, nombre, puntaje):
         archivo = "puntajes.txt"
         puntajes = {"modo_escapa": [], "modo_cazador": []}
@@ -315,6 +326,7 @@ class Interfaz:
                 for jugador, p in puntajes[m]:
                     f.write(f"{m}:{jugador}:{p}\n")
 
+    #funcion para colocacionde trampas
     def colocar_trampa(self):
         if self.modo == "cazador":
             return
@@ -322,7 +334,7 @@ class Interfaz:
         ahora = time.time()
         if len(self.trampas) < 3 and (ahora - self.ultimo_colocada) >= 5:
             i, j = self.jugador.posicion()
-            if isinstance(self.mapa[i][j], Camino):  # ahora usamos la clase
+            if isinstance(self.mapa[i][j], Camino):  
                 trampa = Trampa(i, j)
                 self.trampas.append(trampa)
                 self.ultimo_colocada = ahora
@@ -345,7 +357,7 @@ class Interfaz:
             enemigo, sprite = enemigo_data
             ei, ej = enemigo.posicion()
 
-            # --- Decisión según modo ---
+            # según modo 
             if self.modo == "cazador":
                 objetivo = self.salida  # tupla (i, j)
                 di, dj = astar(self.mapa, (ei, ej), objetivo, es_jugador=False)

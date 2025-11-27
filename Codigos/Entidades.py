@@ -35,11 +35,11 @@ class Jugador(EntidadBase):
         self.corriendo = False
 
     def toggle_correr(self, activo):
-        """Activa o desactiva el modo correr."""
+        #Activa o desactiva el modo correr."""
         self.corriendo = activo if self.energia > 0 else False
 
     def tick_energia(self):
-        """Actualiza la energía cada ciclo."""
+        #Actualiza la energía cada ciclo.
         if self.corriendo:
             self.energia = max(0, self.energia - 5)
             if self.energia == 0:
@@ -50,6 +50,7 @@ class Jugador(EntidadBase):
     def velocidad_actual(self):
         return 2 if self.corriendo else 1
 
+#verificacion si esta vivo
 class Enemigo(EntidadBase):
     def __init__(self, i, j, velocidad=1):
         super().__init__(i, j, velocidad)

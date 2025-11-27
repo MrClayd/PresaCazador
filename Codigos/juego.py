@@ -19,7 +19,7 @@ class Juego:
         # Crear enemigos en posiciones válidas
         self.enemigos = self._crear_enemigos(dificultad)
 
-        # (Aquí seguiría tu lógica de interfaz, modos, etc.)
+    
 
     def _crear_enemigos(self, dificultad):
         """Coloca enemigos en posiciones aleatorias válidas."""

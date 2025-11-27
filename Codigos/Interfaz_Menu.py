@@ -11,11 +11,6 @@ pygame.mixer.init()
 imagenes = ["Imagenes\\ESE_1_M.png", "Imagenes\\ESE_2_M.png", "Imagenes\\ESE_3_M.png",
             "Imagenes\\ESE_9_M.png", "Imagenes\\ESE_3_VA_M.png", "Imagenes\\ESE_6_M.png"]
 indice_actual = 0
-
-
-# -------------------------------------------------------
-# CREAR MANEJADOR DE AUDIO UNA SOLA VEZ (muy importante)
-# -------------------------------------------------------
 audio = AudioManager()
 
 
@@ -51,10 +46,9 @@ def crear_menu():
 
     rotar_imagen()
 
-    # -------------------------------------------------------
+    
     # SUBVENTANAS
-    # -------------------------------------------------------
-
+    #ventana modo de juego
     def seleccionar_modo():
         ventana.withdraw()
         modo_win = tk.Toplevel()
@@ -64,11 +58,12 @@ def crear_menu():
         tk.Label(modo_win, text="Elige el modo de juego", font=("Arial", 18, "bold")).pack(pady=20)
 
         tk.Button(modo_win, text="🚪 Modo 1: Escapa", font=("Arial", 14),
-                  command=lambda: seleccionar_dificultad(modo_win, "escapa")).pack(pady=10)
+                command=lambda: seleccionar_dificultad(modo_win, "escapa")).pack(pady=10)
 
         tk.Button(modo_win, text="🎯 Modo 2: Cazador", font=("Arial", 14),
-                  command=lambda: seleccionar_dificultad(modo_win, "cazador")).pack(pady=10)
+                command=lambda: seleccionar_dificultad(modo_win, "cazador")).pack(pady=10)
 
+    #ventana dificultad
     def seleccionar_dificultad(modo_win, modo):
         modo_win.destroy()
         dif_win = tk.Toplevel()
@@ -78,8 +73,9 @@ def crear_menu():
         tk.Label(dif_win, text="Elige la dificultad", font=("Arial", 18, "bold")).pack(pady=20)
 
         tk.Button(dif_win, text="Atrás", font=("Arial", 12),
-                  command=lambda: [dif_win.destroy(), seleccionar_modo()]).pack(pady=20)
+                command=lambda: [dif_win.destroy(), seleccionar_modo()]).pack(pady=20)
 
+        #ventana de ingreso de nombre
         def iniciar_con_nombre(dificultad):
             dif_win.destroy()
             nombre_win = tk.Toplevel()
@@ -98,23 +94,23 @@ def crear_menu():
                     # Cambia a música del juego
                     audio.play_game_music()
 
-                    # Cerrar menú
+                    
                     ventana.destroy()
-
                     iniciar(dificultad, nombre, modo)
 
             tk.Button(nombre_win, text="OK", font=("Arial", 12),
-                      command=confirmar_nombre).pack(pady=5)
+                    command=confirmar_nombre).pack(pady=5)
 
         tk.Button(dif_win, text="Fácil", font=("Arial", 14),
-                  command=lambda: iniciar_con_nombre("facil")).pack(pady=10)
+                command=lambda: iniciar_con_nombre("facil")).pack(pady=10)
 
         tk.Button(dif_win, text="Normal", font=("Arial", 14),
-                  command=lambda: iniciar_con_nombre("normal")).pack(pady=10)
+                command=lambda: iniciar_con_nombre("normal")).pack(pady=10)
 
         tk.Button(dif_win, text="Difícil", font=("Arial", 14),
-                  command=lambda: iniciar_con_nombre("dificil")).pack(pady=10)
+                command=lambda: iniciar_con_nombre("dificil")).pack(pady=10)
 
+    #Puntajes de los 2 modos
     def ver_puntajes():
         archivo = "puntajes.txt"
         puntajes = {"modo_escapa": [], "modo_cazador": []}
@@ -146,11 +142,8 @@ def crear_menu():
             tk.Label(win, text=f"{i}. {jugador} ⭐ {p}", font=("Arial", 12)).pack()
 
         tk.Button(win, text="Volver al menú", font=("Arial", 12),
-                  command=lambda: [win.destroy(), ventana.deiconify()]).pack(pady=10)
+                command=lambda: [win.destroy(), ventana.deiconify()]).pack(pady=10)
 
-    # -------------------------------------------------------
-    # BOTONES
-    # -------------------------------------------------------
 
     estilo_boton = {
         "font": ("Arial", 14),
@@ -164,7 +157,7 @@ def crear_menu():
     Transparente = "#17298F"
 
     titulo = tk.Label(ventana, text="Wild bound", font=("Arial", 72, "bold"),
-                      bg=Transparente, fg="#CE9B1C")
+                    bg=Transparente, fg="#CE9B1C")
     titulo.place(x=700, y=100)
 
     tk.Button(ventana, text="Jugar", command=seleccionar_modo, **estilo_boton).place(x=810, y=250)

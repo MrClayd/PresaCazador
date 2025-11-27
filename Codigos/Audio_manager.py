@@ -10,7 +10,7 @@ class AudioManager:
     def play_menu_music(self):
         pygame.mixer.music.stop()
         pygame.mixer.music.load(self.menu_music)
-        pygame.mixer.music.play(-1)   # -1 = loop infinito
+        pygame.mixer.music.play(-1)   
         pygame.mixer.music.set_volume(0.7)
 
     def play_game_music(self):

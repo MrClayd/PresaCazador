@@ -50,7 +50,7 @@ class Tunel(CeldaBase):
         entidad.i, entidad.j = self.salida
 
 class Liana(CeldaBase):
-    imagen = None  # aquí estará la imagen, pero NO la cargamos aquí
+    imagen = None  
 
     def __init__(self, i, j, energia=20):
         super().__init__(i, j)
@@ -67,8 +67,6 @@ class Liana(CeldaBase):
 
     def color(self):
         return "green"
-
-
 
 class Salida(CeldaBase):
     def es_transitable(self, es_jugador=False):

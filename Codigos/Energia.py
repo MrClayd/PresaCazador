@@ -12,9 +12,10 @@ class Energia:
             self.ultimo_uso = time.time()
             return True
         return False
-
+    
+# Regenera 1 punto cada 2 segundos si no está en máximo
     def regenerar(self):
-        # Regenera 1 punto cada 2 segundos si no está en máximo
+        
         if self.actual < self.max_energia:
             if time.time() - self.ultimo_uso >= 2:
                 self.actual += 1
